@@ -1,0 +1,461 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8A000020000000000000DEAD /* FileSecretaryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000010000000000000DEAD /* FileSecretaryApp.swift */; };
+		8A000021000000000000DEAD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000011000000000000DEAD /* ContentView.swift */; };
+		8A000022000000000000DEAD /* DiskStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000012000000000000DEAD /* DiskStatusBar.swift */; };
+		8A000023000000000000DEAD /* DropZoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000013000000000000DEAD /* DropZoneView.swift */; };
+		8A000024000000000000DEAD /* FileOrganizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000014000000000000DEAD /* FileOrganizerView.swift */; };
+		8A000025000000000000DEAD /* FileRenameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000015000000000000DEAD /* FileRenameView.swift */; };
+		8A000026000000000000DEAD /* DiskMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000016000000000000DEAD /* DiskMonitor.swift */; };
+		8A000027000000000000DEAD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A000017000000000000DEAD /* Assets.xcassets */; };
+		8A000050000000000000DEAD /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000040000000000000DEAD /* RuleEngine.swift */; };
+		8A000051000000000000DEAD /* FileOrganizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000041000000000000DEAD /* FileOrganizer.swift */; };
+		8A000052000000000000DEAD /* DuplicateResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000042000000000000DEAD /* DuplicateResolver.swift */; };
+		8A000053000000000000DEAD /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000043000000000000DEAD /* BookmarkManager.swift */; };
+		8A000054000000000000DEAD /* default_rules.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A000044000000000000DEAD /* default_rules.json */; };
+		8A000060000000000000DEAD /* OrganizerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000060100000000000DEAD /* OrganizerViewModel.swift */; };
+		8A000061000000000000DEAD /* LeftPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000061100000000000DEAD /* LeftPanelView.swift */; };
+		8A000062000000000000DEAD /* CategoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000062100000000000DEAD /* CategoryListView.swift */; };
+		8A000063000000000000DEAD /* CategoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000063100000000000DEAD /* CategoryCardView.swift */; };
+		8A000064000000000000DEAD /* CategoryModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000064100000000000DEAD /* CategoryModalView.swift */; };
+		8A000065000000000000DEAD /* DuplicateFileDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000065100000000000DEAD /* DuplicateFileDialog.swift */; };
+		8A000066000000000000DEAD /* UncategorizedDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000066100000000000DEAD /* UncategorizedDialog.swift */; };
+		8A000067000000000000DEAD /* CategoryConflictDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000067100000000000DEAD /* CategoryConflictDialog.swift */; };
+		8A000080000000000000DEAD /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000070000000000000DEAD /* SettingsManager.swift */; };
+		8A000081000000000000DEAD /* UndoHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000071000000000000DEAD /* UndoHistory.swift */; };
+		8A000082000000000000DEAD /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000072000000000000DEAD /* LogWriter.swift */; };
+		8A000083000000000000DEAD /* ExcludeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000073000000000000DEAD /* ExcludeListView.swift */; };
+		8A0000B0000000000000DEAD /* FileRenamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000090000000000000DEAD /* FileRenamer.swift */; };
+		8A0000B1000000000000DEAD /* RenameRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000091000000000000DEAD /* RenameRowView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		8A000004000000000000DEAD /* FileSecretary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FileSecretary.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A000010000000000000DEAD /* FileSecretaryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSecretaryApp.swift; sourceTree = "<group>"; };
+		8A000011000000000000DEAD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		8A000012000000000000DEAD /* DiskStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskStatusBar.swift; sourceTree = "<group>"; };
+		8A000013000000000000DEAD /* DropZoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropZoneView.swift; sourceTree = "<group>"; };
+		8A000014000000000000DEAD /* FileOrganizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOrganizerView.swift; sourceTree = "<group>"; };
+		8A000015000000000000DEAD /* FileRenameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRenameView.swift; sourceTree = "<group>"; };
+		8A000016000000000000DEAD /* DiskMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskMonitor.swift; sourceTree = "<group>"; };
+		8A000017000000000000DEAD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8A000018000000000000DEAD /* FileSecretary.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FileSecretary.entitlements; sourceTree = "<group>"; };
+		8A000040000000000000DEAD /* RuleEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngine.swift; sourceTree = "<group>"; };
+		8A000041000000000000DEAD /* FileOrganizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOrganizer.swift; sourceTree = "<group>"; };
+		8A000042000000000000DEAD /* DuplicateResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateResolver.swift; sourceTree = "<group>"; };
+		8A000043000000000000DEAD /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkManager.swift; sourceTree = "<group>"; };
+		8A000044000000000000DEAD /* default_rules.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = default_rules.json; sourceTree = "<group>"; };
+		8A000060100000000000DEAD /* OrganizerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerViewModel.swift; sourceTree = "<group>"; };
+		8A000061100000000000DEAD /* LeftPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeftPanelView.swift; sourceTree = "<group>"; };
+		8A000062100000000000DEAD /* CategoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryListView.swift; sourceTree = "<group>"; };
+		8A000063100000000000DEAD /* CategoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCardView.swift; sourceTree = "<group>"; };
+		8A000064100000000000DEAD /* CategoryModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryModalView.swift; sourceTree = "<group>"; };
+		8A000065100000000000DEAD /* DuplicateFileDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateFileDialog.swift; sourceTree = "<group>"; };
+		8A000066100000000000DEAD /* UncategorizedDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UncategorizedDialog.swift; sourceTree = "<group>"; };
+		8A000067100000000000DEAD /* CategoryConflictDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryConflictDialog.swift; sourceTree = "<group>"; };
+		8A000070000000000000DEAD /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		8A000071000000000000DEAD /* UndoHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoHistory.swift; sourceTree = "<group>"; };
+		8A000072000000000000DEAD /* LogWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
+		8A000073000000000000DEAD /* ExcludeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcludeListView.swift; sourceTree = "<group>"; };
+		8A000090000000000000DEAD /* FileRenamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRenamer.swift; sourceTree = "<group>"; };
+		8A000091000000000000DEAD /* RenameRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameRowView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8A000008000000000000DEAD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8A000002000000000000DEAD /* FileSecretary */ = {
+			isa = PBXGroup;
+			children = (
+				8A000030000000000000DEAD /* FileSecretary */,
+				8A000003000000000000DEAD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8A000003000000000000DEAD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8A000004000000000000DEAD /* FileSecretary.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8A000030000000000000DEAD /* FileSecretary */ = {
+			isa = PBXGroup;
+			children = (
+				8A000010000000000000DEAD /* FileSecretaryApp.swift */,
+				8A000011000000000000DEAD /* ContentView.swift */,
+				8A000018000000000000DEAD /* FileSecretary.entitlements */,
+				8A000031000000000000DEAD /* Views */,
+				8A000032000000000000DEAD /* Core */,
+				8A000033000000000000DEAD /* Resources */,
+				8A000017000000000000DEAD /* Assets.xcassets */,
+			);
+			path = FileSecretary;
+			sourceTree = "<group>";
+		};
+		8A000031000000000000DEAD /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8A000012000000000000DEAD /* DiskStatusBar.swift */,
+				8A000013000000000000DEAD /* DropZoneView.swift */,
+				8A000014000000000000DEAD /* FileOrganizerView.swift */,
+				8A000015000000000000DEAD /* FileRenameView.swift */,
+				8A000091000000000000DEAD /* RenameRowView.swift */,
+				8A000061100000000000DEAD /* LeftPanelView.swift */,
+				8A000062100000000000DEAD /* CategoryListView.swift */,
+				8A000063100000000000DEAD /* CategoryCardView.swift */,
+				8A000064100000000000DEAD /* CategoryModalView.swift */,
+				8A000068000000000000DEAD /* Dialogs */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		8A000068000000000000DEAD /* Dialogs */ = {
+			isa = PBXGroup;
+			children = (
+				8A000065100000000000DEAD /* DuplicateFileDialog.swift */,
+				8A000066100000000000DEAD /* UncategorizedDialog.swift */,
+				8A000067100000000000DEAD /* CategoryConflictDialog.swift */,
+				8A000073000000000000DEAD /* ExcludeListView.swift */,
+			);
+			path = Dialogs;
+			sourceTree = "<group>";
+		};
+		8A000032000000000000DEAD /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				8A000016000000000000DEAD /* DiskMonitor.swift */,
+				8A000040000000000000DEAD /* RuleEngine.swift */,
+				8A000041000000000000DEAD /* FileOrganizer.swift */,
+				8A000042000000000000DEAD /* DuplicateResolver.swift */,
+				8A000043000000000000DEAD /* BookmarkManager.swift */,
+				8A000060100000000000DEAD /* OrganizerViewModel.swift */,
+				8A000070000000000000DEAD /* SettingsManager.swift */,
+				8A000071000000000000DEAD /* UndoHistory.swift */,
+				8A000072000000000000DEAD /* LogWriter.swift */,
+				8A000090000000000000DEAD /* FileRenamer.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		8A000033000000000000DEAD /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8A000044000000000000DEAD /* default_rules.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8A000005000000000000DEAD /* FileSecretary */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A00000A000000000000DEAD /* Build configuration list for PBXNativeTarget "FileSecretary" */;
+			buildPhases = (
+				8A000006000000000000DEAD /* Sources */,
+				8A000007000000000000DEAD /* Resources */,
+				8A000008000000000000DEAD /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FileSecretary;
+			productName = FileSecretary;
+			productReference = 8A000004000000000000DEAD /* FileSecretary.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8A000001000000000000DEAD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					8A000005000000000000DEAD = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 8A000009000000000000DEAD /* Build configuration list for PBXProject "FileSecretary" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				ko,
+			);
+			mainGroup = 8A000002000000000000DEAD;
+			productRefGroup = 8A000003000000000000DEAD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8A000005000000000000DEAD /* FileSecretary */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8A000007000000000000DEAD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A000027000000000000DEAD /* Assets.xcassets in Resources */,
+				8A000054000000000000DEAD /* default_rules.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8A000006000000000000DEAD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A000020000000000000DEAD /* FileSecretaryApp.swift in Sources */,
+				8A000021000000000000DEAD /* ContentView.swift in Sources */,
+				8A000022000000000000DEAD /* DiskStatusBar.swift in Sources */,
+				8A000023000000000000DEAD /* DropZoneView.swift in Sources */,
+				8A000024000000000000DEAD /* FileOrganizerView.swift in Sources */,
+				8A000025000000000000DEAD /* FileRenameView.swift in Sources */,
+				8A000026000000000000DEAD /* DiskMonitor.swift in Sources */,
+				8A000050000000000000DEAD /* RuleEngine.swift in Sources */,
+				8A000051000000000000DEAD /* FileOrganizer.swift in Sources */,
+				8A000052000000000000DEAD /* DuplicateResolver.swift in Sources */,
+				8A000053000000000000DEAD /* BookmarkManager.swift in Sources */,
+				8A000060000000000000DEAD /* OrganizerViewModel.swift in Sources */,
+				8A000061000000000000DEAD /* LeftPanelView.swift in Sources */,
+				8A000062000000000000DEAD /* CategoryListView.swift in Sources */,
+				8A000063000000000000DEAD /* CategoryCardView.swift in Sources */,
+				8A000064000000000000DEAD /* CategoryModalView.swift in Sources */,
+				8A000065000000000000DEAD /* DuplicateFileDialog.swift in Sources */,
+				8A000066000000000000DEAD /* UncategorizedDialog.swift in Sources */,
+				8A000067000000000000DEAD /* CategoryConflictDialog.swift in Sources */,
+				8A000080000000000000DEAD /* SettingsManager.swift in Sources */,
+				8A000081000000000000DEAD /* UndoHistory.swift in Sources */,
+				8A000082000000000000DEAD /* LogWriter.swift in Sources */,
+				8A000083000000000000DEAD /* ExcludeListView.swift in Sources */,
+				8A0000B0000000000000DEAD /* FileRenamer.swift in Sources */,
+				8A0000B1000000000000DEAD /* RenameRowView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		8A00000B000000000000DEAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8A00000C000000000000DEAD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		8A00000D000000000000DEAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FileSecretary/FileSecretary.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "File Secretary";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filesecretary.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+			};
+			name = Debug;
+		};
+		8A00000E000000000000DEAD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FileSecretary/FileSecretary.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "File Secretary";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filesecretary.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8A000009000000000000DEAD /* Build configuration list for PBXProject "FileSecretary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A00000B000000000000DEAD /* Debug */,
+				8A00000C000000000000DEAD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A00000A000000000000DEAD /* Build configuration list for PBXNativeTarget "FileSecretary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A00000D000000000000DEAD /* Debug */,
+				8A00000E000000000000DEAD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 8A000001000000000000DEAD /* Project object */;
+}

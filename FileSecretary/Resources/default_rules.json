@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "images",
+      "num": 1,
+      "name": "이미지",
+      "conditionType": "type",
+      "types": ["이미지"],
+      "keywords": [],
+      "logic": null,
+      "outputIdx": 0
+    },
+    {
+      "id": "videos",
+      "num": 2,
+      "name": "동영상",
+      "conditionType": "type",
+      "types": ["동영상"],
+      "keywords": [],
+      "logic": null,
+      "outputIdx": 0
+    },
+    {
+      "id": "documents",
+      "num": 3,
+      "name": "문서",
+      "conditionType": "type",
+      "types": ["문서"],
+      "keywords": [],
+      "logic": null,
+      "outputIdx": 0
+    },
+    {
+      "id": "adobe",
+      "num": 4,
+      "name": "어도비",
+      "conditionType": "type",
+      "types": ["어도비"],
+      "keywords": [],
+      "logic": null,
+      "outputIdx": 0
+    }
+  ],
+  "outputFolders": [],
+  "excludeList": {
+    "keywords": [],
+    "extensions": [".DS_Store", ".gitignore"]
+  }
+}
