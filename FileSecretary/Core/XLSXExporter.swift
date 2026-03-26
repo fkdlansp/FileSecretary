@@ -81,7 +81,7 @@ struct XLSXExporter {
             ("xl/styles.xml",              styles),
             ("xl/sharedStrings.xml",       ss),
         ]
-        return buildZip(files.map { ($0, $1.data(using: .utf8)!) })
+        return buildZip(files: files.map { ($0, $1.data(using: .utf8)!) })
     }
 
     // MARK: - Static XML content
@@ -202,11 +202,25 @@ struct XLSXExporter {
     private static func dosDateTime() -> (UInt16, UInt16) {
         let c = Calendar(identifier: .gregorian)
             .dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
-        let t = UInt16(((c.hour ?? 0) << 11) | ((c.minute ?? 0) << 5) | ((c.second ?? 0) / 2))
-        let d = UInt16((((c.year ?? 1980) - 1980) << 9) | ((c.month ?? 1) << 5) | (c.day ?? 1))
+        let hour   = c.hour   ?? 0
+        let minute = c.minute ?? 0
+        let second = c.second ?? 0
+        let year   = c.year   ?? 1980
+        let month  = c.month  ?? 1
+        let day    = c.day    ?? 1
+
+        let tHour: UInt16   = UInt16(hour) << 11
+        let tMinute: UInt16 = UInt16(minute) << 5
+        let tSecond: UInt16 = UInt16(second / 2)
+        let t = tHour | tMinute | tSecond
+
+        let dYear: UInt16  = UInt16(year - 1980) << 9
+        let dMonth: UInt16 = UInt16(month) << 5
+        let dDay: UInt16   = UInt16(day)
+        let d = dYear | dMonth | dDay
+
         return (t, d)
     }
-
     private static func colLetter(_ index: Int) -> String {
         var result = ""; var n = index
         repeat {
@@ -224,6 +238,6 @@ struct XLSXExporter {
 }
 
 private extension Data {
-    mutating func le16(_ v: UInt16) { var x = v.littleEndian; append(contentsOf: withUnsafeBytes(of: &x, Array.init)) }
-    mutating func le32(_ v: UInt32) { var x = v.littleEndian; append(contentsOf: withUnsafeBytes(of: &x, Array.init)) }
+    mutating func le16(_ v: UInt16) { var x = v.littleEndian; Swift.withUnsafeBytes(of: &x) { self.append(contentsOf: $0) } }
+    mutating func le32(_ v: UInt32) { var x = v.littleEndian; Swift.withUnsafeBytes(of: &x) { self.append(contentsOf: $0) } }
 }

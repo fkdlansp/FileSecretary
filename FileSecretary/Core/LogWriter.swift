@@ -79,7 +79,7 @@ class LogWriter {
     }
 }
 
-private extension DateFormatter {
+extension DateFormatter {
     static let logTimestamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
