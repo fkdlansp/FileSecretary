@@ -32,6 +32,7 @@
 		8A000081000000000000DEAD /* UndoHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000071000000000000DEAD /* UndoHistory.swift */; };
 		8A000082000000000000DEAD /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000072000000000000DEAD /* LogWriter.swift */; };
 		8A000083000000000000DEAD /* ExcludeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000073000000000000DEAD /* ExcludeListView.swift */; };
+		8A000084000000000000DEAD /* XLSXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000074000000000000DEAD /* XLSXExporter.swift */; };
 		8A0000B0000000000000DEAD /* FileRenamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000090000000000000DEAD /* FileRenamer.swift */; };
 		8A0000B1000000000000DEAD /* RenameRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000091000000000000DEAD /* RenameRowView.swift */; };
 /* End PBXBuildFile section */
@@ -63,6 +64,7 @@
 		8A000070000000000000DEAD /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		8A000071000000000000DEAD /* UndoHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoHistory.swift; sourceTree = "<group>"; };
 		8A000072000000000000DEAD /* LogWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
+		8A000074000000000000DEAD /* XLSXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XLSXExporter.swift; sourceTree = "<group>"; };
 		8A000073000000000000DEAD /* ExcludeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcludeListView.swift; sourceTree = "<group>"; };
 		8A000090000000000000DEAD /* FileRenamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRenamer.swift; sourceTree = "<group>"; };
 		8A000091000000000000DEAD /* RenameRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameRowView.swift; sourceTree = "<group>"; };
@@ -149,6 +151,7 @@
 				8A000070000000000000DEAD /* SettingsManager.swift */,
 				8A000071000000000000DEAD /* UndoHistory.swift */,
 				8A000072000000000000DEAD /* LogWriter.swift */,
+				8A000074000000000000DEAD /* XLSXExporter.swift */,
 				8A000090000000000000DEAD /* FileRenamer.swift */,
 			);
 			path = Core;
@@ -255,6 +258,7 @@
 				8A000080000000000000DEAD /* SettingsManager.swift in Sources */,
 				8A000081000000000000DEAD /* UndoHistory.swift in Sources */,
 				8A000082000000000000DEAD /* LogWriter.swift in Sources */,
+				8A000084000000000000DEAD /* XLSXExporter.swift in Sources */,
 				8A000083000000000000DEAD /* ExcludeListView.swift in Sources */,
 				8A0000B0000000000000DEAD /* FileRenamer.swift in Sources */,
 				8A0000B1000000000000DEAD /* RenameRowView.swift in Sources */,

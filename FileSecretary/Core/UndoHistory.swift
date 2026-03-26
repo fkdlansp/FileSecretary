@@ -15,27 +15,28 @@ class UndoHistory {
     }
 
     /// Undo the last organize operation, moving files back to their original locations.
-    /// Returns the number of files successfully restored.
+    /// Returns (restored moves, skipped URLs).
     @discardableResult
-    func undo() -> Int {
-        guard let entry = stack.popLast() else { return 0 }
+    func undo() -> (restored: [(from: URL, to: URL)], skipped: [URL]) {
+        guard let entry = stack.popLast() else { return ([], []) }
         let fm = FileManager.default
-        var restored = 0
+        var restored: [(from: URL, to: URL)] = []
+        var skipped:  [URL] = []
         for move in entry.moves.reversed() {
             // move.to = current location, move.from = original location
-            guard fm.fileExists(atPath: move.to.path) else { continue }
-            guard !fm.fileExists(atPath: move.from.path) else { continue }
+            guard fm.fileExists(atPath: move.to.path) else { skipped.append(move.to); continue }
+            guard !fm.fileExists(atPath: move.from.path) else { skipped.append(move.to); continue }
             let destDir = move.from.deletingLastPathComponent()
             do {
                 if !fm.fileExists(atPath: destDir.path) {
                     try fm.createDirectory(at: destDir, withIntermediateDirectories: true)
                 }
                 try fm.moveItem(at: move.to, to: move.from)
-                restored += 1
+                restored.append((from: move.to, to: move.from))
             } catch {
-                // Skip this file, continue with others
+                skipped.append(move.to)
             }
         }
-        return restored
+        return (restored, skipped)
     }
 }

@@ -10,13 +10,15 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .organizer
     @State private var isExpanded = false
     @State private var targetFolders: [URL] = []
+    @StateObject private var organizerVM = OrganizerViewModel()
 
     var body: some View {
         Group {
             if isExpanded {
                 ExpandedRootView(
                     selectedTab: $selectedTab,
-                    targetFolders: $targetFolders
+                    targetFolders: $targetFolders,
+                    organizerVM: organizerVM
                 )
             } else {
                 CompactRootView(
@@ -112,8 +114,7 @@ struct CompactRootView: View {
 struct ExpandedRootView: View {
     @Binding var selectedTab: AppTab
     @Binding var targetFolders: [URL]
-
-    @StateObject private var organizerVM = OrganizerViewModel()
+    let organizerVM: OrganizerViewModel
 
     var body: some View {
         VStack(spacing: 0) {

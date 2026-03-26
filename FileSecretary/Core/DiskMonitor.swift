@@ -1,12 +1,18 @@
 import Foundation
 import AppKit
 
+struct VolumeInfo: Identifiable {
+    let id: String          // volume mount path (stable across refreshes)
+    let name: String
+    let totalBytes: Int64
+    let usedBytes: Int64
+    let freeBytes: Int64
+    let isExternal: Bool
+    var usageRatio: Double { totalBytes > 0 ? Double(usedBytes) / Double(totalBytes) : 0 }
+}
+
 class DiskMonitor: ObservableObject {
-    @Published var volumeName: String = "Macintosh HD"
-    @Published var totalBytes: Int64 = 0
-    @Published var usedBytes: Int64 = 0
-    @Published var freeBytes: Int64 = 0
-    @Published var usageRatio: Double = 0.0
+    @Published var volumes: [VolumeInfo] = []
 
     private var timer: Timer?
 
@@ -22,23 +28,43 @@ class DiskMonitor: ObservableObject {
     }
 
     func refresh() {
-        let url = URL(fileURLWithPath: "/")
-        guard let values = try? url.resourceValues(forKeys: [
+        let keys: [URLResourceKey] = [
             .volumeNameKey,
             .volumeTotalCapacityKey,
-            .volumeAvailableCapacityForImportantUsageKey
-        ]) else { return }
+            .volumeAvailableCapacityKey,
+            .volumeAvailableCapacityForImportantUsageKey,
+            .volumeIsInternalKey,
+            .volumeIsBrowsableKey,
+        ]
+        guard let urls = FileManager.default.mountedVolumeURLs(
+            includingResourceValuesForKeys: keys,
+            options: .skipHiddenVolumes
+        ) else { return }
 
-        let total = Int64(values.volumeTotalCapacity ?? 0)
-        let free = Int64(values.volumeAvailableCapacityForImportantUsage ?? 0)
-        let used = max(0, total - free)
+        var result: [VolumeInfo] = []
+        for url in urls {
+            guard let vals = try? url.resourceValues(forKeys: Set(keys)) else { continue }
+            guard vals.volumeIsBrowsable == true else { continue }
+            let total = Int64(vals.volumeTotalCapacity ?? 0)
+            guard total > 0 else { continue }
+            // volumeAvailableCapacityForImportantUsage returns 0 on ExFAT/non-APFS volumes
+            // fall back to the basic volumeAvailableCapacity in that case
+            let freeImportant = Int64(vals.volumeAvailableCapacityForImportantUsage ?? 0)
+            let freeBasic     = Int64(vals.volumeAvailableCapacity ?? 0)
+            let free = max(freeImportant, freeBasic)
+            let used = max(0, total - free)
+            result.append(VolumeInfo(
+                id: url.path,
+                name: vals.volumeName ?? url.lastPathComponent,
+                totalBytes: total,
+                usedBytes: used,
+                freeBytes: free,
+                isExternal: !(vals.volumeIsInternal ?? true)
+            ))
+        }
 
         DispatchQueue.main.async {
-            self.volumeName = values.volumeName ?? "Macintosh HD"
-            self.totalBytes = total
-            self.usedBytes = used
-            self.freeBytes = free
-            self.usageRatio = total > 0 ? Double(used) / Double(total) : 0
+            self.volumes = result
         }
     }
 

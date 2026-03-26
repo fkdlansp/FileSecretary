@@ -31,9 +31,14 @@ class OrganizerViewModel: ObservableObject {
     private var pendingUncategorizedCompletion: ((Bool) -> Void)?
     private var pendingConflictCompletion:      ((ConflictResolution) -> Void)?
 
+    // MARK: - Shared reference (used by menu commands)
+
+    static weak var current: OrganizerViewModel?
+
     // MARK: - Init
 
     init() {
+        OrganizerViewModel.current = self
         loadSettings()
     }
 
@@ -274,8 +279,9 @@ class OrganizerViewModel: ObservableObject {
             let secureURLs  = allFolders.map { BookmarkManager.shared.restoreURL(for: $0.path) ?? $0 }
             secureURLs.forEach { BookmarkManager.shared.startAccessing($0) }
             defer { secureURLs.forEach { BookmarkManager.shared.stopAccessing($0) } }
-            _ = undoHistory.undo()
+            let result = undoHistory.undo()
             undoCount = undoHistory.count
+            LogWriter.shared.logUndoResult(restored: result.restored, skipped: result.skipped)
         }
     }
 
@@ -350,7 +356,9 @@ class OrganizerViewModel: ObservableObject {
         if let xlsxType = UTType(filenameExtension: "xlsx") {
             panel.allowedContentTypes = [xlsxType]
         }
-        let dateStr = DateFormatter.logTimestamp.string(from: Date())
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let dateStr = fmt.string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
             .replacingOccurrences(of: " ", with: "_")
         panel.nameFieldStringValue = "FileSecretary_Log_\(dateStr).xlsx"

@@ -166,12 +166,7 @@ struct LeftPanelView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 4)
 
-                Button("로그 XLSX 내보내기") { vm.exportLogXLSX() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundColor(.accentColor)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
+
             }
         }
         .frame(width: 210)

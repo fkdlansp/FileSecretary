@@ -14,32 +14,28 @@ struct FileSecretaryApp: App {
     }
 }
 
-struct PresetCommands: Commands {
-    @FocusedObject private var vm: OrganizerViewModel?
+// MARK: - Commands
+// OrganizerViewModel.current is set on init() and lives for the app's lifetime.
+// Using a static reference bypasses SwiftUI's unreliable focus mechanism for commands.
 
+struct PresetCommands: Commands {
     var body: some Commands {
         CommandMenu("프리셋") {
-            Button("프리셋 저장") { vm?.savePreset() }
+            Button("프리셋 저장") { OrganizerViewModel.current?.savePreset() }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
-                .disabled(vm == nil)
-            Button("프리셋 불러오기") { vm?.loadPreset() }
+            Button("프리셋 불러오기") { OrganizerViewModel.current?.loadPreset() }
                 .keyboardShortcut("o", modifiers: [.command, .shift])
-                .disabled(vm == nil)
         }
     }
 }
 
 struct SettingsCommands: Commands {
-    @FocusedObject private var vm: OrganizerViewModel?
-
     var body: some Commands {
         CommandMenu("환경설정") {
-            Button("제외 목록 편집...") { vm?.showExcludeListEditor = true }
-                .disabled(vm == nil)
-            Button("로그 파일 열기") { vm?.openLogFolder() }
+            Button("제외 목록 편집...") { OrganizerViewModel.current?.showExcludeListEditor = true }
+            Button("로그 파일 열기") { OrganizerViewModel.current?.openLogFolder() }
             Divider()
-            Button("기본값으로 초기화") { vm?.resetToDefaults() }
-                .disabled(vm == nil)
+            Button("기본값으로 초기화") { OrganizerViewModel.current?.resetToDefaults() }
         }
     }
 }
