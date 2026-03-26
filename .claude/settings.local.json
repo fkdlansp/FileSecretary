@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcode-select -p)",
+      "Bash(swift --version)",
+      "Bash(mkdir -p \"/Users/rev_imac1/Desktop/앱 개발/FileSecretary/FileSecretary/Views\")",
+      "Bash(mkdir -p \"/Users/rev_imac1/Desktop/앱 개발/FileSecretary/FileSecretary/Core\")",
+      "Bash(mkdir -p \"/Users/rev_imac1/Desktop/앱 개발/FileSecretary/FileSecretary/Assets.xcassets/AccentColor.colorset\")",
+      "Bash(mkdir -p \"/Users/rev_imac1/Desktop/앱 개발/FileSecretary/FileSecretary/Assets.xcassets/AppIcon.appiconset\")",
+      "Bash(mkdir -p \"/Users/rev_imac1/Desktop/앱 개발/FileSecretary/FileSecretary.xcodeproj\")",
+      "Bash(plutil:*)",
+      "Bash(xcodebuild -project FileSecretary.xcodeproj -scheme FileSecretary -configuration Debug build CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO)",
+      "Bash(sudo xcodebuild:*)",
+      "Bash(xcodebuild -scheme FileSecretary -configuration Debug build CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO)",
+      "Bash(xcodebuild -runFirstLaunch)",
+      "Bash(xcodebuild -project FileSecretary.xcodeproj -scheme FileSecretary -configuration Debug CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=\"\" build)",
+      "Bash(xcodebuild -project FileSecretary.xcodeproj -scheme FileSecretary -configuration Debug build)",
+      "Bash(xcodebuild -scheme FileSecretary -configuration Debug build)",
+      "Bash(gh auth:*)"
+    ]
+  }
+}
