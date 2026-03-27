@@ -29,6 +29,14 @@ struct LeftPanelView: View {
                         vm.openFolderPanel { vm.addTargetFolder($0) }
                     }
 
+                    if !vm.targetFolders.isEmpty {
+                        Text("경로를 클릭하면 Finder에서 열립니다")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 4)
+                    }
+
                     if isTargetDropTargeted {
                         Text("여기에 놓으면 대상 폴더로 추가됩니다")
                             .font(.system(size: 10))
@@ -74,6 +82,14 @@ struct LeftPanelView: View {
                         disabled: vm.outputFolders.count >= 4
                     ) {
                         vm.openFolderPanel { vm.addOutputFolder($0) }
+                    }
+
+                    if !vm.outputFolders.isEmpty {
+                        Text("경로를 클릭하면 Finder에서 열립니다")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 4)
                     }
 
                     if isOutputDropTargeted {
@@ -236,9 +252,12 @@ private struct FolderRow: View {
 
             Text(url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                 .font(.system(size: 11))
+                .foregroundColor(isHovered ? .accentColor : .primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onTapGesture { NSWorkspace.shared.open(url) }
+                .help("Finder에서 열기")
 
             Button(action: onRemove) {
                 Image(systemName: "minus.circle.fill")
@@ -262,6 +281,8 @@ private struct OutputFolderRow: View {
     private let colors: [Color] = [.blue, .green, .orange, .purple]
     private let labels = ["A","B","C","D"]
 
+    @State private var isPathHovered = false
+
     var body: some View {
         HStack(spacing: 6) {
             Circle()
@@ -274,9 +295,13 @@ private struct OutputFolderRow: View {
 
             Text(url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                 .font(.system(size: 11))
+                .foregroundColor(isPathHovered ? .accentColor : .primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onTapGesture { NSWorkspace.shared.open(url) }
+                .onHover { isPathHovered = $0 }
+                .help("Finder에서 열기")
 
             if idx == 0 {
                 Text("메인")

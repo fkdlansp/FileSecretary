@@ -69,6 +69,23 @@ struct CategoryModalView: View {
                                 }
                             }
                         }
+                        if !selectedTypes.isEmpty {
+                            VStack(alignment: .leading, spacing: 3) {
+                                ForEach(allTypes.filter { selectedTypes.contains($0.rawValue) }, id: \.rawValue) { ft in
+                                    HStack(alignment: .top, spacing: 4) {
+                                        Text("\(ft.rawValue):")
+                                            .font(.system(size: 10, weight: .medium))
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 50, alignment: .trailing)
+                                        Text(ft.extensions.joined(separator: ", "))
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                            }
+                            .padding(.top, 2)
+                        }
                     }
                 }
 

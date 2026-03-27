@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .organizer
     @State private var isExpanded = false
     @State private var targetFolders: [URL] = []
+    @State private var renameFolderURL: URL? = nil
     @StateObject private var organizerVM = OrganizerViewModel()
 
     var body: some View {
@@ -18,13 +19,15 @@ struct ContentView: View {
                 ExpandedRootView(
                     selectedTab: $selectedTab,
                     targetFolders: $targetFolders,
+                    renameFolderURL: renameFolderURL,
                     organizerVM: organizerVM
                 )
             } else {
                 CompactRootView(
                     selectedTab: $selectedTab,
                     isExpanded: $isExpanded,
-                    targetFolders: $targetFolders
+                    targetFolders: $targetFolders,
+                    renameFolderURL: $renameFolderURL
                 )
             }
         }
@@ -95,13 +98,21 @@ struct CompactRootView: View {
     @Binding var selectedTab: AppTab
     @Binding var isExpanded: Bool
     @Binding var targetFolders: [URL]
+    @Binding var renameFolderURL: URL?
 
     var body: some View {
         VStack(spacing: 0) {
             TabBarView(selectedTab: $selectedTab, compact: true)
             Divider()
             DropZoneView(tab: selectedTab) { urls in
-                targetFolders = urls
+                if selectedTab == .rename {
+                    renameFolderURL = urls.first(where: {
+                        var isDir: ObjCBool = false
+                        return FileManager.default.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue
+                    }) ?? urls.first.map { $0.deletingLastPathComponent() }
+                } else {
+                    targetFolders = urls
+                }
                 isExpanded = true
             }
         }
@@ -114,6 +125,7 @@ struct CompactRootView: View {
 struct ExpandedRootView: View {
     @Binding var selectedTab: AppTab
     @Binding var targetFolders: [URL]
+    let renameFolderURL: URL?
     let organizerVM: OrganizerViewModel
 
     var body: some View {
@@ -129,7 +141,7 @@ struct ExpandedRootView: View {
                 case .organizer:
                     FileOrganizerView(targetFolders: $targetFolders, vm: organizerVM)
                 case .rename:
-                    FileRenameView()
+                    FileRenameView(initialFolderURL: renameFolderURL)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -24,16 +24,34 @@ class FileRenamer {
     func apply(items: [RenameItem],
                digits: Int,
                startNumber: Int,
-               unifyBase: Bool,
-               unifiedBaseName: String) -> RenameResult {
+               unifiedBaseName: String,
+               unifyMode: Int = 0,
+               useNumbering: Bool = true) -> RenameResult {
         var result = RenameResult()
         let trimmedBase = unifiedBaseName.trimmingCharacters(in: .whitespaces)
 
         for (i, item) in items.enumerated() {
-            let numStr = String(format: "%0\(digits)d", startNumber + i)
-            let base = (unifyBase && !trimmedBase.isEmpty) ? trimmedBase : item.baseName
-            let ext  = item.ext.isEmpty ? "" : ".\(item.ext)"
-            let newName = "\(numStr)_\(base)\(ext)"
+            let base: String
+            if !trimmedBase.isEmpty {
+                if unifyMode == 0 {
+                    base = trimmedBase
+                } else {
+                    let originalBase = item.originalURL.deletingPathExtension().lastPathComponent
+                    base = "\(trimmedBase)(\(originalBase))"
+                }
+            } else {
+                base = item.baseName
+            }
+
+            let ext = item.ext.isEmpty ? "" : ".\(item.ext)"
+            let newName: String
+            if useNumbering {
+                let numStr = String(format: "%0\(digits)d", startNumber + i)
+                newName = "\(numStr)_\(base)\(ext)"
+            } else {
+                newName = "\(base)\(ext)"
+            }
+
             let destURL = item.originalURL
                 .deletingLastPathComponent()
                 .appendingPathComponent(newName)

@@ -64,7 +64,7 @@ struct CategoryListView: View {
                     Label("되돌리기 (\(vm.undoCount))", systemImage: "arrow.uturn.backward")
                         .font(.system(size: 11))
                 }
-                .buttonStyle(ActionButtonStyle(color: Color(NSColor.systemOrange)))
+                .buttonStyle(ActionButtonStyle(color: vm.undoCount > 0 ? Color(NSColor.systemOrange) : Color(NSColor.systemGray)))
                 .disabled(vm.undoCount == 0)
 
                 // Organize button

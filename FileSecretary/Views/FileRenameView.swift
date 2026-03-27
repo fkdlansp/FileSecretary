@@ -9,14 +9,21 @@ private class RenameViewModel: ObservableObject {
     @Published var folderURL: URL? = nil
     @Published var items: [RenameItem] = []
     @Published var digits: Int = 3
-    @Published var startNumber: Int = 1
-    @Published var unifyBase: Bool = false
+    @Published var startNumberText: String = ""
     @Published var unifiedBaseName: String = ""
+    @Published var unifyMode: Int = 0       // 0 = 완전 교체, 1 = 통일명(원본)
+
+    var useNumbering: Bool { Int(startNumberText.trimmingCharacters(in: .whitespaces)) != nil }
+    var startNumber: Int { Int(startNumberText.trimmingCharacters(in: .whitespaces)) ?? 1 }
     @Published var isApplying: Bool = false
     @Published var errorMessage: String? = nil
 
     private let renamer = FileRenamer()
     private var snapshot: [RenameItem] = []
+    private var undoStack: [[(from: URL, to: URL)]] = []
+
+    var canUndo: Bool { !undoStack.isEmpty }
+    var undoCount: Int { undoStack.count }
 
     // MARK: Folder loading
 
@@ -38,11 +45,28 @@ private class RenameViewModel: ObservableObject {
     // MARK: Preview
 
     func previewName(for item: RenameItem, at index: Int) -> String {
-        let numStr = String(format: "%0\(digits)d", startNumber + index)
         let trimmed = unifiedBaseName.trimmingCharacters(in: .whitespaces)
-        let base = (unifyBase && !trimmed.isEmpty) ? trimmed : item.baseName
-        let ext  = item.ext.isEmpty ? "" : ".\(item.ext)"
-        return "\(numStr)_\(base)\(ext)"
+
+        let base: String
+        if !trimmed.isEmpty {
+            if unifyMode == 0 {
+                base = trimmed
+            } else {
+                let originalBase = item.originalURL.deletingPathExtension().lastPathComponent
+                base = "\(trimmed)(\(originalBase))"
+            }
+        } else {
+            base = item.baseName
+        }
+
+        let ext = item.ext.isEmpty ? "" : ".\(item.ext)"
+
+        if useNumbering {
+            let numStr = String(format: "%0\(digits)d", startNumber + index)
+            return "\(numStr)_\(base)\(ext)"
+        } else {
+            return "\(base)\(ext)"
+        }
     }
 
     // MARK: Actions
@@ -54,9 +78,18 @@ private class RenameViewModel: ObservableObject {
     func reset() {
         items = snapshot
         digits = 3
-        startNumber = 1
-        unifyBase = false
+        startNumberText = ""
         unifiedBaseName = ""
+        unifyMode = 0
+        errorMessage = nil
+        undoStack = []
+    }
+
+    func clearFolder() {
+        folderURL = nil
+        items = []
+        snapshot = []
+        undoStack = []
         errorMessage = nil
     }
 
@@ -68,13 +101,26 @@ private class RenameViewModel: ObservableObject {
             items: items,
             digits: digits,
             startNumber: startNumber,
-            unifyBase: unifyBase,
-            unifiedBaseName: unifiedBaseName
+            unifiedBaseName: unifiedBaseName,
+            unifyMode: unifyMode,
+            useNumbering: useNumbering
         )
         isApplying = false
+        if !result.renamed.isEmpty {
+            undoStack.append(result.renamed)
+        }
         if !result.failed.isEmpty {
             errorMessage = "변경 실패 \(result.failed.count)개"
         }
+        loadFolder(folder)
+    }
+
+    func undo() {
+        guard let last = undoStack.last, let folder = folderURL else { return }
+        for pair in last.reversed() {
+            try? FileManager.default.moveItem(at: pair.to, to: pair.from)
+        }
+        undoStack.removeLast()
         loadFolder(folder)
     }
 }
@@ -82,11 +128,22 @@ private class RenameViewModel: ObservableObject {
 // MARK: - FileRenameView
 
 struct FileRenameView: View {
+    var initialFolderURL: URL? = nil
     @StateObject private var vm = RenameViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             folderHeader
+            if vm.folderURL != nil {
+                HStack {
+                    Text("경로를 클릭하면 Finder에서 열립니다")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 4)
+            }
             Divider()
             controlsBar
             Divider()
@@ -97,21 +154,48 @@ struct FileRenameView: View {
             actionBar
         }
         .onDrop(of: [.fileURL], isTargeted: nil, perform: handleDrop)
+        .onAppear {
+            if let url = initialFolderURL {
+                vm.loadFolder(url)
+            }
+        }
     }
 
     // MARK: - Folder header
+
+    @State private var isPathHovered = false
 
     private var folderHeader: some View {
         HStack(spacing: 8) {
             Image(systemName: "folder.fill")
                 .font(.system(size: 12))
                 .foregroundColor(.accentColor)
-            Text(vm.folderURL?.path ?? "폴더를 여기에 드롭하거나 선택하세요")
-                .font(.system(size: 11))
-                .foregroundColor(vm.folderURL == nil ? .secondary : .primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            if let url = vm.folderURL {
+                Text(url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+                    .font(.system(size: 11))
+                    .foregroundColor(isPathHovered ? .accentColor : .primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .onTapGesture { NSWorkspace.shared.open(url) }
+                    .onHover { isPathHovered = $0 }
+                    .help("Finder에서 열기")
+            } else {
+                Text("폴더를 여기에 드롭하거나 선택하세요")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
             Spacer()
+            if vm.folderURL != nil {
+                Button {
+                    vm.clearFolder()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("폴더 제거")
+            }
             Button("폴더 선택") { selectFolder() }
                 .font(.system(size: 11))
         }
@@ -122,44 +206,65 @@ struct FileRenameView: View {
     // MARK: - Controls bar
 
     private var controlsBar: some View {
-        HStack(spacing: 12) {
-            Text("번호 자릿수")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-            Picker("", selection: $vm.digits) {
-                ForEach(1 ... 5, id: \.self) { Text("\($0)").tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 130)
-            .labelsHidden()
+        VStack(alignment: .leading, spacing: 6) {
+            // Row 1: 번호 자릿수, 시작 번호, 공통 이름, 통일 방식
+            HStack(spacing: 12) {
+                Text("번호 자릿수")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                Picker("", selection: $vm.digits) {
+                    ForEach(1 ... 5, id: \.self) { Text("\($0)").tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 130)
+                .labelsHidden()
+                .disabled(!vm.useNumbering)
+                .opacity(vm.useNumbering ? 1 : 0.4)
 
-            Divider().frame(height: 18)
+                Divider().frame(height: 18)
 
-            Text("시작 번호")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-            TextField("", text: Binding(
-                get: { String(vm.startNumber) },
-                set: { if let n = Int($0), n > 0 { vm.startNumber = n } }
-            ))
-            .textFieldStyle(.roundedBorder)
-            .frame(width: 54)
-            .font(.system(size: 11))
+                Text("시작 번호")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                TextField("없음", text: $vm.startNumberText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 54)
+                    .font(.system(size: 11))
+                    .onChange(of: vm.startNumberText) { val in
+                        let filtered = val.filter { $0.isNumber }
+                        if filtered != val { vm.startNumberText = filtered }
+                    }
 
-            Divider().frame(height: 18)
+                Divider().frame(height: 18)
 
-            Toggle("파일명 통일", isOn: $vm.unifyBase)
-                .toggleStyle(.checkbox)
-                .font(.system(size: 11))
-
-            if vm.unifyBase {
-                TextField("공통 이름", text: $vm.unifiedBaseName)
+                Text("공통 이름")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                TextField("비우면 원본 파일명 유지", text: $vm.unifiedBaseName)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 11))
-                    .frame(width: 140)
+                    .frame(width: 160)
+
+                Divider().frame(height: 18)
+
+                Text("통일 방식")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                Picker("", selection: $vm.unifyMode) {
+                    Text("통일명").tag(0)
+                    Text("통일명(원본명)").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 170)
+                .labelsHidden()
+
+                Spacer()
             }
 
-            Spacer()
+            // 안내
+            Text("시작 번호를 비워두면 번호 없이 저장됩니다  ·  공통 이름을 비워두면 원본 파일명이 유지됩니다")
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
@@ -225,9 +330,18 @@ struct FileRenameView: View {
                     .lineLimit(1)
             }
             Spacer()
+            Button {
+                vm.undo()
+            } label: {
+                Text("↩ 되돌리기 (\(vm.undoCount))")
+            }
+            .buttonStyle(ActionButtonStyle(color: vm.canUndo ? Color(NSColor.systemOrange) : Color(NSColor.systemGray)))
+            .disabled(!vm.canUndo)
+
             Button("초기화") { vm.reset() }
-                .buttonStyle(ActionButtonStyle(color: Color(NSColor.systemOrange)))
+                .buttonStyle(ActionButtonStyle(color: Color(NSColor.systemGray)))
                 .disabled(vm.items.isEmpty)
+
             Button {
                 vm.apply()
             } label: {
