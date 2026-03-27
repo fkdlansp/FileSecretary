@@ -167,11 +167,12 @@ class FileOrganizer {
     /// One-click Downloads cleanup — type-based, no numbering, default folders.
     @discardableResult
     func organizeDownloads(
+        at downloads: URL = (FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads"))
+            .resolvingSymlinksInPath(),
         duplicateHandler: @escaping (URL) async -> DuplicateMode = { _ in .addNumber },
         conflictHandler: @escaping (URL, [Category]) async -> ConflictResolution = { _, _ in .useFirst }
     ) async throws -> OrganizeResult {
-        let downloads = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Downloads")
 
         let categories: [Category] = FileTypeCategory.allCases.enumerated().map { i, ft in
             Category(

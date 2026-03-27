@@ -7,6 +7,8 @@ import UniformTypeIdentifiers
 private class RenameViewModel: ObservableObject {
 
     @Published var folderURL: URL? = nil
+    @Published var fileMode: Bool = false   // true = 개별 파일 드래그 모드
+    @Published var fileModeCount: Int = 0   // 파일 모드 시 파일 개수 (헤더 표시용)
     @Published var items: [RenameItem] = []
     @Published var digits: Int = 3
     @Published var startNumberText: String = ""
@@ -28,6 +30,7 @@ private class RenameViewModel: ObservableObject {
     // MARK: Folder loading
 
     func loadFolder(_ url: URL) {
+        fileMode = false
         folderURL = url
         errorMessage = nil
         let all = (try? FileManager.default.contentsOfDirectory(
@@ -40,6 +43,24 @@ private class RenameViewModel: ObservableObject {
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         items = regular.map { RenameItem(originalURL: $0) }
         snapshot = items
+        undoStack = []
+    }
+
+    // MARK: File loading (개별 파일 드래그)
+
+    func loadFiles(_ urls: [URL]) {
+        fileMode = true
+        errorMessage = nil
+        let regular = urls
+            .filter { (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+        items = regular.map { RenameItem(originalURL: $0) }
+        snapshot = items
+        fileModeCount = items.count
+        undoStack = []
+        // 모든 파일이 같은 폴더면 folderURL 표시용으로만 사용
+        let parents = Set(regular.map { $0.deletingLastPathComponent().path })
+        folderURL = parents.count == 1 ? regular.first?.deletingLastPathComponent() : nil
     }
 
     // MARK: Select all
@@ -100,6 +121,7 @@ private class RenameViewModel: ObservableObject {
     }
 
     func clearFolder() {
+        fileMode = false
         folderURL = nil
         items = []
         snapshot = []
@@ -108,7 +130,7 @@ private class RenameViewModel: ObservableObject {
     }
 
     func apply() {
-        guard !items.isEmpty, let folder = folderURL else { return }
+        guard !items.isEmpty else { return }
         isApplying = true
         errorMessage = nil
         let result = renamer.apply(
@@ -126,16 +148,51 @@ private class RenameViewModel: ObservableObject {
         if !result.failed.isEmpty {
             errorMessage = "변경 실패 \(result.failed.count)개"
         }
-        loadFolder(folder)
+        let logFolder = folderURL ?? items.first?.originalURL.deletingLastPathComponent() ?? URL(fileURLWithPath: NSHomeDirectory())
+        if !result.renamed.isEmpty || !result.failed.isEmpty {
+            LogWriter.shared.logRenameResult(renamed: result.renamed, failed: result.failed, folder: logFolder)
+        }
+        if fileMode {
+            refreshItemURLs(renamedPairs: result.renamed)
+        } else if let folder = folderURL {
+            loadFolder(folder)
+        }
+    }
+
+    private func refreshItemURLs(renamedPairs: [(from: URL, to: URL)]) {
+        var renamedMap: [URL: URL] = [:]
+        for pair in renamedPairs { renamedMap[pair.from] = pair.to }
+        items = items.map { item in
+            if let newURL = renamedMap[item.originalURL] {
+                return RenameItem(originalURL: newURL)
+            }
+            return item
+        }
+        // folderURL 갱신 (같은 폴더인 경우)
+        let parents = Set(items.map { $0.originalURL.deletingLastPathComponent().path })
+        folderURL = parents.count == 1 ? items.first?.originalURL.deletingLastPathComponent() : nil
     }
 
     func undo() {
-        guard let last = undoStack.last, let folder = folderURL else { return }
+        guard let last = undoStack.last else { return }
         for pair in last.reversed() {
             try? FileManager.default.moveItem(at: pair.to, to: pair.from)
         }
         undoStack.removeLast()
-        loadFolder(folder)
+        if fileMode {
+            var restoredMap: [URL: URL] = [:]
+            for pair in last { restoredMap[pair.to] = pair.from }
+            items = items.map { item in
+                if let oldURL = restoredMap[item.originalURL] {
+                    return RenameItem(originalURL: oldURL)
+                }
+                return item
+            }
+            let parents = Set(items.map { $0.originalURL.deletingLastPathComponent().path })
+            folderURL = parents.count == 1 ? items.first?.originalURL.deletingLastPathComponent() : nil
+        } else if let folder = folderURL {
+            loadFolder(folder)
+        }
     }
 }
 
@@ -181,10 +238,25 @@ struct FileRenameView: View {
 
     private var folderHeader: some View {
         HStack(spacing: 8) {
-            Image(systemName: "folder.fill")
+            Image(systemName: vm.fileMode ? "doc.on.doc.fill" : "folder.fill")
                 .font(.system(size: 12))
                 .foregroundColor(.accentColor)
-            if let url = vm.folderURL {
+            if vm.fileMode {
+                if let url = vm.folderURL {
+                    Text("\(url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))  ·  \(vm.fileModeCount)개 파일")
+                        .font(.system(size: 11))
+                        .foregroundColor(isPathHovered ? .accentColor : .primary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .onTapGesture { NSWorkspace.shared.open(url) }
+                        .onHover { isPathHovered = $0 }
+                        .help("Finder에서 열기")
+                } else {
+                    Text("\(vm.fileModeCount)개 파일 선택됨 (여러 폴더)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.primary)
+                }
+            } else if let url = vm.folderURL {
                 Text(url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                     .font(.system(size: 11))
                     .foregroundColor(isPathHovered ? .accentColor : .primary)
@@ -194,7 +266,7 @@ struct FileRenameView: View {
                     .onHover { isPathHovered = $0 }
                     .help("Finder에서 열기")
             } else {
-                Text("폴더를 여기에 드롭하거나 선택하세요")
+                Text("폴더 또는 파일을 여기에 드롭하거나 폴더를 선택하세요")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -422,14 +494,34 @@ struct FileRenameView: View {
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
-        provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
-            guard let data,
-                  let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
-            var isDir: ObjCBool = false
-            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir),
-                  isDir.boolValue else { return }
-            DispatchQueue.main.async { vm.loadFolder(url) }
+        guard !providers.isEmpty else { return false }
+        var collectedURLs: [URL?] = Array(repeating: nil, count: providers.count)
+        let group = DispatchGroup()
+        for (i, provider) in providers.enumerated() {
+            group.enter()
+            provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
+                defer { group.leave() }
+                guard let data, let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
+                collectedURLs[i] = url
+            }
+        }
+        group.notify(queue: .main) {
+            let urls = collectedURLs.compactMap { $0 }
+            guard !urls.isEmpty else { return }
+            // 단일 폴더 드래그
+            if urls.count == 1 {
+                var isDir: ObjCBool = false
+                if FileManager.default.fileExists(atPath: urls[0].path, isDirectory: &isDir), isDir.boolValue {
+                    vm.loadFolder(urls[0])
+                    return
+                }
+            }
+            // 파일만 필터링
+            let files = urls.filter { url in
+                var isDir: ObjCBool = false
+                return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && !isDir.boolValue
+            }
+            if !files.isEmpty { vm.loadFiles(files) }
         }
         return true
     }

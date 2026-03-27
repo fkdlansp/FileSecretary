@@ -11,9 +11,10 @@ class OrganizerViewModel: ObservableObject {
     @Published var outputFolders:  [URL] = []
     @Published var categories:     [Category] = []
     @Published var excludeList:    ExcludeList = ExcludeList(keywords: [], extensions: [".DS_Store", ".gitignore"])
-    @Published var etcOutputIdx:   Int = 0
-    @Published var undoCount:      Int = 0
-    @Published var isOrganizing:   Bool = false
+    @Published var etcOutputIdx:          Int = 0
+    @Published var undoCount:             Int = 0
+    @Published var isOrganizing:          Bool = false
+    @Published var downloadResultMessage: String? = nil
 
     // MARK: - Dialog triggers
 
@@ -330,21 +331,32 @@ class OrganizerViewModel: ObservableObject {
     func organizeDownloads() {
         Task { @MainActor in
             isOrganizing = true
+            downloadResultMessage = nil
             var cachedMode: DuplicateMode? = nil
-            if let result = try? await fileOrganizer.organizeDownloads(
-                duplicateHandler: { [weak self] file in
-                    guard let self else { return .addNumber }
-                    if let mode = cachedMode { return mode }
-                    let mode = await self.askDuplicateMode(for: file)
-                    cachedMode = mode
-                    return mode
-                }
-            ) {
+
+            let downloadsURL = (FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+                ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads"))
+                .resolvingSymlinksInPath()
+            do {
+                let result = try await fileOrganizer.organizeDownloads(
+                    at: downloadsURL,
+                    duplicateHandler: { [weak self] file in
+                        guard let self else { return .addNumber }
+                        if let mode = cachedMode { return mode }
+                        let mode = await self.askDuplicateMode(for: file)
+                        cachedMode = mode
+                        return mode
+                    }
+                )
                 undoHistory.push(result)
                 undoCount = undoHistory.count
-                let downloads = FileManager.default.homeDirectoryForCurrentUser
-                    .appendingPathComponent("Downloads")
-                LogWriter.shared.logOrganizeResult(result, targetFolders: [downloads], outputFolders: [])
+                LogWriter.shared.logOrganizeResult(result, targetFolders: [downloadsURL], outputFolders: [])
+                downloadResultMessage = result.movedCount > 0
+                    ? "완료 · \(result.movedCount)개 이동"
+                    : "정리할 파일 없음"
+            } catch {
+                LogWriter.shared.log("다운로드 정리 오류: \(error.localizedDescription)")
+                downloadResultMessage = "오류 발생 (로그 확인)"
             }
             isOrganizing = false
             conflictFile = nil

@@ -134,6 +134,38 @@ class LogWriter {
         }
     }
 
+    func logRenameResult(renamed: [(from: URL, to: URL)], failed: [URL], folder: URL) {
+        let now = Date()
+        log("===== 파일명 변경 시작 =====")
+        log("대상 폴더: \(folder.path)")
+        renamed.forEach { log("변경: \($0.from.lastPathComponent) → \($0.to.lastPathComponent)") }
+        failed.forEach  { log("실패: \($0.lastPathComponent)") }
+        log("===== 파일명 변경 완료: 변경 \(renamed.count)개 / 실패 \(failed.count)개 =====")
+
+        var runEntries: [LogEntry] = []
+        for pair in renamed {
+            let e = LogEntry(timestamp: now, action: "파일명 변경",
+                fileName: pair.from.lastPathComponent,
+                sourcePath: pair.from.path, destPath: pair.to.path,
+                errorMessage: "", targetFolders: folder.path, outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+        for url in failed {
+            let e = LogEntry(timestamp: now, action: "변경 실패",
+                fileName: url.lastPathComponent,
+                sourcePath: url.path, destPath: "",
+                errorMessage: "", targetFolders: folder.path, outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+
+        if !runEntries.isEmpty {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+            let xlsxURL = xlsxSubfolderURL.appendingPathComponent("rename_\(f.string(from: now)).xlsx")
+            try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
+        }
+    }
+
     // Manual full-session export
     func exportXLSX(to url: URL) throws {
         try XLSXExporter.export(entries: entries, to: url)

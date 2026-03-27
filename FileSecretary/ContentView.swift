@@ -27,7 +27,8 @@ struct ContentView: View {
                     selectedTab: $selectedTab,
                     isExpanded: $isExpanded,
                     targetFolders: $targetFolders,
-                    renameFolderURL: $renameFolderURL
+                    renameFolderURL: $renameFolderURL,
+                    organizerVM: organizerVM
                 )
             }
         }
@@ -91,6 +92,7 @@ struct CompactRootView: View {
     @Binding var isExpanded: Bool
     @Binding var targetFolders: [URL]
     @Binding var renameFolderURL: URL?
+    @ObservedObject var organizerVM: OrganizerViewModel
 
     var body: some View {
         VStack(spacing: 0) {
@@ -107,6 +109,60 @@ struct CompactRootView: View {
                 }
                 isExpanded = true
             }
+            Divider()
+            VStack(spacing: 6) {
+                // 다운로드 정리 버튼
+                Button {
+                    organizerVM.organizeDownloads()
+                } label: {
+                    HStack(spacing: 5) {
+                        if organizerVM.isOrganizing {
+                            ProgressView().controlSize(.mini).tint(.white)
+                            Text("정리 중...")
+                        } else if let msg = organizerVM.downloadResultMessage {
+                            Image(systemName: msg.hasPrefix("오류") ? "xmark.circle.fill" : "checkmark.circle.fill")
+                            Text(msg)
+                        } else {
+                            Image(systemName: "arrow.down.to.line.circle.fill")
+                            Text("다운로드 폴더 정리")
+                        }
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 7)
+                    .background(
+                        organizerVM.downloadResultMessage?.hasPrefix("오류") == true
+                            ? Color(NSColor.systemRed)
+                            : Color(NSColor.systemBlue)
+                    )
+                    .cornerRadius(7)
+                }
+                .buttonStyle(.plain)
+                .disabled(organizerVM.isOrganizing)
+                .padding(.horizontal, 14)
+
+                // 되돌리기 버튼 (이력 있을 때만 표시)
+                if organizerVM.undoCount > 0 {
+                    Button {
+                        organizerVM.performUndo()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.uturn.backward")
+                            Text("되돌리기 (\(organizerVM.undoCount))")
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background(Color(NSColor.systemOrange))
+                        .cornerRadius(7)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 14)
+                }
+            }
+            .padding(.vertical, 8)
         }
         .frame(width: 260, height: 220)
     }
@@ -198,14 +254,18 @@ private struct WindowFinder: NSViewRepresentable {
     func makeNSView(context: Context) -> CapturingView {
         let v = CapturingView()
         v.onFound = { window in
-            context.coordinator.install(on: window)
-            self.onFound(window)
+            DispatchQueue.main.async {
+                context.coordinator.install(on: window)
+                self.onFound(window)
+            }
         }
         return v
     }
 
     func updateNSView(_ nsView: CapturingView, context: Context) {
-        if let w = nsView.window { onFound(w) }
+        if let w = nsView.window {
+            DispatchQueue.main.async { self.onFound(w) }
+        }
     }
 
     class CapturingView: NSView {

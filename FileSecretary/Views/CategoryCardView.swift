@@ -192,19 +192,19 @@ struct OutputDropdown: View {
             }
         } label: {
             Text(selectedLabel)
-                .font(.system(size: 10))
+                .font(.system(size: 12))
                 .lineLimit(1)
                 .foregroundColor(.primary)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
         }
         .menuStyle(.borderlessButton)
-        .fixedSize()
+        .padding(.leading, 10)
+        .padding(.trailing, 8)
+        .padding(.vertical, 5)
+        .frame(minWidth: 100, maxWidth: 160, alignment: .leading)
         .overlay(
             RoundedRectangle(cornerRadius: 5)
-                .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+                .stroke(Color(NSColor.separatorColor), lineWidth: 1.5)
         )
-        .frame(maxWidth: 140)
     }
 }
 
