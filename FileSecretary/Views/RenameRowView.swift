@@ -10,13 +10,18 @@ struct RenameRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            // Drag handle indicator
+            // 체크박스
+            Toggle("", isOn: $item.isSelected)
+                .toggleStyle(.checkbox)
+                .frame(width: 14)
+
+            // 드래그 핸들
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 9))
                 .foregroundColor(Color.secondary.opacity(0.45))
                 .frame(width: 14)
 
-            // Original name (editable on double-click)
+            // 원본 파일명 (더블클릭 편집)
             Group {
                 if isEditing {
                     TextField("", text: $editBuffer)
@@ -30,23 +35,24 @@ struct RenameRowView: View {
                     Text(item.displayName)
                         .font(.system(size: 12))
                         .lineLimit(1)
+                        .foregroundColor(item.isSelected ? .primary : .secondary)
                         .help("더블 클릭으로 파일 기본명 편집")
                         .onTapGesture(count: 2) { startEdit() }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Arrow
+            // 가운데 화살표
             Image(systemName: "arrow.right")
                 .font(.system(size: 9))
                 .foregroundColor(Color.secondary.opacity(0.4))
 
-            // Preview
+            // 변경 후 미리보기
             Text(preview)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(.secondary)
+                .foregroundColor(item.isSelected ? .secondary : Color.secondary.opacity(0.35))
                 .lineLimit(1)
-                .frame(minWidth: 170, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)

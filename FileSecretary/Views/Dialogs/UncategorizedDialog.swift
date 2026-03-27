@@ -2,8 +2,12 @@ import SwiftUI
 
 struct UncategorizedDialog: View {
     let fileName: String
-    let onMoveToEtc: () -> Void
-    let onSkip: () -> Void
+    let mainFolderName: String?
+    let onMoveToMain: (Bool) -> Void
+    let onLeaveInPlace: (Bool) -> Void
+    let onMoveToLocalEtc: (Bool) -> Void
+
+    @State private var applyToAll = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -28,15 +32,64 @@ struct UncategorizedDialog: View {
 
             Divider()
 
-            HStack {
-                Spacer()
-                Button("건너뛰기", action: onSkip)
-                    .keyboardShortcut(.cancelAction)
-                Button("기타로 이동", action: onMoveToEtc)
+            VStack(spacing: 8) {
+                if let name = mainFolderName {
+                    Button(action: { onMoveToMain(applyToAll) }) {
+                        HStack {
+                            Image(systemName: "arrow.right.circle")
+                            Text("메인 폴더로 이동")
+                                .font(.system(size: 12, weight: .medium))
+                            Spacer()
+                            Text(name)
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.accentColor)
                     .keyboardShortcut(.defaultAction)
+                }
+
+                Button(action: { onMoveToLocalEtc(applyToAll) }) {
+                    HStack {
+                        Image(systemName: "folder.badge.plus")
+                        Text("해당 폴더에 기타 폴더 만들어서 이동")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(mainFolderName == nil ? .defaultAction : KeyboardShortcut("e", modifiers: .command))
+
+                Button(action: { onLeaveInPlace(applyToAll) }) {
+                    HStack {
+                        Image(systemName: "minus.circle")
+                        Text("해당 폴더에 남기기 (건너뜀)")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.bordered)
+                .tint(.secondary)
+                .keyboardShortcut(.cancelAction)
             }
+
+            Divider()
+
+            Toggle(isOn: $applyToAll) {
+                Text("이 대상 폴더의 이후 미분류 파일에 모두 적용")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .toggleStyle(.checkbox)
         }
         .padding(20)
-        .frame(width: 340)
+        .frame(width: 380)
     }
 }

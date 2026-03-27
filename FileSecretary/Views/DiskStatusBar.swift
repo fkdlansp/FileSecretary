@@ -4,21 +4,35 @@ struct DiskStatusBar: View {
     @StateObject private var monitor = DiskMonitor()
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
-                ForEach(monitor.volumes) { volume in
-                    VolumeItemView(volume: volume, formatted: monitor.formatted)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                    if volume.id != monitor.volumes.last?.id {
-                        Divider().frame(height: 42)
-                    }
-                }
+        let firstRow  = Array(monitor.volumes.prefix(3))
+        let secondRow = Array(monitor.volumes.dropFirst(3))
+
+        VStack(alignment: .leading, spacing: 0) {
+            rowView(firstRow)
+
+            if !secondRow.isEmpty {
+                Divider()
+                rowView(secondRow)
             }
         }
-        .frame(height: 78)
         .background(Color(NSColor.controlBackgroundColor))
         .overlay(Divider(), alignment: .bottom)
+    }
+
+    @ViewBuilder
+    private func rowView(_ volumes: [VolumeInfo]) -> some View {
+        HStack(spacing: 0) {
+            ForEach(volumes) { volume in
+                VolumeItemView(volume: volume, formatted: monitor.formatted)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 10)
+                if volume.id != volumes.last?.id {
+                    Divider().frame(height: 42)
+                }
+            }
+            Spacer()
+        }
+        .frame(height: 78)
     }
 }
 

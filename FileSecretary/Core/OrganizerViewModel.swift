@@ -11,6 +11,7 @@ class OrganizerViewModel: ObservableObject {
     @Published var outputFolders:  [URL] = []
     @Published var categories:     [Category] = []
     @Published var excludeList:    ExcludeList = ExcludeList(keywords: [], extensions: [".DS_Store", ".gitignore"])
+    @Published var etcOutputIdx:   Int = 0
     @Published var undoCount:      Int = 0
     @Published var isOrganizing:   Bool = false
 
@@ -27,9 +28,11 @@ class OrganizerViewModel: ObservableObject {
 
     private let fileOrganizer  = FileOrganizer()
     private let undoHistory    = UndoHistory()
-    private var duplicateContinuation:      CheckedContinuation<DuplicateMode, Never>?
-    private var pendingUncategorizedCompletion: ((Bool) -> Void)?
-    private var pendingConflictCompletion:      ((ConflictResolution) -> Void)?
+    private var duplicateContinuation:          CheckedContinuation<DuplicateMode, Never>?
+    private var pendingUncategorizedCompletion: ((UncategorizedResolution, Bool) -> Void)?
+    private var pendingConflictCompletion:      ((ConflictResolution, Bool) -> Void)?
+
+    @Published var uncategorizedMainFolderName: String? = nil
 
     // MARK: - Shared reference (used by menu commands)
 
@@ -46,8 +49,10 @@ class OrganizerViewModel: ObservableObject {
 
     func loadSettings() {
         if let saved = SettingsManager.shared.load() {
-            categories  = saved.categories
-            excludeList = saved.excludeList
+            // outputIdx는 출력폴더 순서가 달라질 수 있으므로 재실행 시 리셋
+            categories   = saved.categories.map { var c = $0; c.outputIdx = 0; return c }
+            excludeList  = saved.excludeList
+            etcOutputIdx = 0
         } else {
             loadDefaultRules()
         }
@@ -66,9 +71,15 @@ class OrganizerViewModel: ObservableObject {
             version: 1,
             categories: categories,
             outputFolders: outputFolders.map(\.path),
-            excludeList: excludeList
+            excludeList: excludeList,
+            etcOutputIdx: etcOutputIdx
         )
         SettingsManager.shared.save(rules)
+    }
+
+    func updateEtcOutputIdx(_ idx: Int) {
+        etcOutputIdx = idx
+        saveSettings()
     }
 
     func resetToDefaults() {
@@ -91,7 +102,6 @@ class OrganizerViewModel: ObservableObject {
     // MARK: - Output Folders
 
     func addOutputFolder(_ url: URL) {
-        guard outputFolders.count < 4 else { return }
         BookmarkManager.shared.saveBookmark(for: url)
         guard !outputFolders.contains(url) else { return }
         outputFolders.append(url)
@@ -102,7 +112,9 @@ class OrganizerViewModel: ObservableObject {
     }
 
     var outputFolderLabel: (Int) -> String { { idx in
-        ["A","B","C","D"][safe: idx] ?? "?"
+        guard idx >= 0 else { return "?" }
+        let letters = Array("ABCDEFGHIJKLMNOP")
+        return idx < letters.count ? String(letters[idx]) : "\(idx + 1)"
     }}
 
     // MARK: - Categories
@@ -173,14 +185,14 @@ class OrganizerViewModel: ObservableObject {
         duplicateContinuation = nil
     }
 
-    func confirmUncategorized(_ move: Bool) {
-        pendingUncategorizedCompletion?(move)
+    func confirmUncategorized(_ resolution: UncategorizedResolution, applyToAll: Bool = false) {
+        pendingUncategorizedCompletion?(resolution, applyToAll)
         pendingUncategorizedCompletion = nil
         showUncategorizedDialog = false
     }
 
-    func resolveConflict(_ resolution: ConflictResolution) {
-        pendingConflictCompletion?(resolution)
+    func resolveConflict(_ resolution: ConflictResolution, applyToAll: Bool = false) {
+        pendingConflictCompletion?(resolution, applyToAll)
         pendingConflictCompletion = nil
         showConflictDialog = false
         conflictFile = nil
@@ -188,21 +200,22 @@ class OrganizerViewModel: ObservableObject {
     }
 
     @MainActor
-    private func askConflict(for file: URL, categories: [Category]) async -> ConflictResolution {
+    private func askConflict(for file: URL, categories: [Category]) async -> (ConflictResolution, Bool) {
         conflictFile = file
         conflictCategories = categories
         showConflictDialog = true
         return await withCheckedContinuation { continuation in
-            pendingConflictCompletion = { continuation.resume(returning: $0) }
+            pendingConflictCompletion = { continuation.resume(returning: ($0, $1)) }
         }
     }
 
     @MainActor
-    private func askUncategorized(for file: URL) async -> Bool {
+    private func askUncategorized(for file: URL) async -> (UncategorizedResolution, Bool) {
         conflictFile = file
+        uncategorizedMainFolderName = outputFolders.first?.lastPathComponent
         showUncategorizedDialog = true
         return await withCheckedContinuation { continuation in
-            pendingUncategorizedCompletion = { continuation.resume(returning: $0) }
+            pendingUncategorizedCompletion = { continuation.resume(returning: ($0, $1)) }
         }
     }
 
@@ -225,13 +238,19 @@ class OrganizerViewModel: ObservableObject {
             conflictFile = nil
         }
 
-        let outputs = outputFolders
-        let cats    = categories
-        let excl    = excludeList
+        let outputs    = outputFolders
+        let cats       = categories
+        let excl       = excludeList
+        let allTargets = targetFolders
+        let etcIdx     = etcOutputIdx
 
+        // 중복 파일 처리: 전체 정리 1회당 1번만 물어봄
         var cachedDuplicateMode: DuplicateMode? = nil
+        var combinedMoved:   [(from: URL, to: URL)] = []
+        var combinedSkipped: [URL] = []
+        var combinedErrors:  [(file: URL, error: Error)] = []
 
-        for folder in targetFolders {
+        for folder in allTargets {
             let secureFolder  = BookmarkManager.shared.restoreURL(for: folder.path) ?? folder
             let secureOutputs = outputs.map { BookmarkManager.shared.restoreURL(for: $0.path) ?? $0 }
 
@@ -242,11 +261,16 @@ class OrganizerViewModel: ObservableObject {
                 secureOutputs.forEach { BookmarkManager.shared.stopAccessing($0) }
             }
 
-            if let result = try? await fileOrganizer.organize(
-                targetFolder: folder,
+            // 폴더별로 캐시 리셋: 같은 충돌 조합이면 1번만, 기타는 이 폴더 안에서 1번만
+            var cachedConflicts: [Set<String>: ConflictResolution] = [:]
+            var cachedUncategorized: UncategorizedResolution? = nil
+
+            guard let result = try? await fileOrganizer.organize(
+                targetFolder: secureFolder,
                 categories: cats,
                 excludeList: excl,
-                outputFolders: outputs,
+                outputFolders: secureOutputs,
+                etcOutputIdx: etcIdx,
                 duplicateHandler: { [weak self] file in
                     guard let self else { return .skip }
                     if let mode = cachedDuplicateMode { return mode }
@@ -254,20 +278,36 @@ class OrganizerViewModel: ObservableObject {
                     cachedDuplicateMode = mode
                     return mode
                 },
-                conflictHandler: { [weak self] file, cats in
+                conflictHandler: { [weak self] file, matchedCats in
                     guard let self else { return .useFirst }
-                    return await self.askConflict(for: file, categories: cats)
+                    let key = Set(matchedCats.map(\.id))
+                    if let cached = cachedConflicts[key] { return cached }
+                    let (resolution, applyToAll) = await self.askConflict(for: file, categories: matchedCats)
+                    if applyToAll { cachedConflicts[key] = resolution }
+                    return resolution
                 },
                 uncategorizedHandler: { [weak self] file in
-                    guard let self else { return false }
-                    return await self.askUncategorized(for: file)
+                    guard let self else { return .leaveInPlace }
+                    if let cached = cachedUncategorized { return cached }
+                    let (resolution, applyToAll) = await self.askUncategorized(for: file)
+                    if applyToAll { cachedUncategorized = resolution }
+                    return resolution
                 }
-            ) {
-                undoHistory.push(result)
-                undoCount = undoHistory.count
-                LogWriter.shared.logOrganizeResult(result, targetFolders: [folder], outputFolders: outputs)
-            }
+            ) else { continue }
+
+            combinedMoved   += result.moved
+            combinedSkipped += result.skipped
+            combinedErrors  += result.errors
         }
+
+        // 전체 정리를 1개의 undo 단계로 기록 (멀티폴더도 한 번에 되돌리기)
+        var combined = OrganizeResult()
+        combined.moved   = combinedMoved
+        combined.skipped = combinedSkipped
+        combined.errors  = combinedErrors
+        undoHistory.push(combined)
+        undoCount = undoHistory.count
+        LogWriter.shared.logOrganizeResult(combined, targetFolders: allTargets, outputFolders: outputs)
     }
 
     // MARK: - Undo

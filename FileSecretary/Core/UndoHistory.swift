@@ -15,6 +15,7 @@ class UndoHistory {
     }
 
     /// Undo the last organize operation, moving files back to their original locations.
+    /// Also removes empty folders that were created during the organize.
     /// Returns (restored moves, skipped URLs).
     @discardableResult
     func undo() -> (restored: [(from: URL, to: URL)], skipped: [URL]) {
@@ -22,6 +23,10 @@ class UndoHistory {
         let fm = FileManager.default
         var restored: [(from: URL, to: URL)] = []
         var skipped:  [URL] = []
+
+        // 정리 시 생성된 폴더 목록 수집 (중복 제거)
+        var createdFolders = Set(entry.moves.map { $0.to.deletingLastPathComponent().path })
+
         for move in entry.moves.reversed() {
             // move.to = current location, move.from = original location
             guard fm.fileExists(atPath: move.to.path) else { skipped.append(move.to); continue }
@@ -37,6 +42,17 @@ class UndoHistory {
                 skipped.append(move.to)
             }
         }
+
+        // 파일 복원 후 빈 폴더 삭제 (정리 시 생성된 폴더만)
+        for folderPath in createdFolders {
+            let folderURL = URL(fileURLWithPath: folderPath)
+            guard fm.fileExists(atPath: folderPath) else { continue }
+            let contents = (try? fm.contentsOfDirectory(atPath: folderPath)) ?? []
+            if contents.isEmpty {
+                try? fm.removeItem(at: folderURL)
+            }
+        }
+
         return (restored, skipped)
     }
 }

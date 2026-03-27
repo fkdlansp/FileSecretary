@@ -9,6 +9,17 @@ struct CategoryCardView: View {
 
     @State private var isHovered = false
 
+    /// 출력폴더 팔레트 (LeftPanelView.OutputFolderRow와 동일 순서)
+    static let palette: [Color] = [.blue, .green, .orange, .purple, .cyan, .pink, .yellow, .indigo]
+
+    /// 현재 카테고리에 할당된 출력폴더 색상 (개별모드=nil)
+    var outputColor: Color? {
+        guard category.outputIdx > 0,
+              category.outputIdx - 1 < outputFolders.count else { return nil }
+        let idx = category.outputIdx - 1
+        return Self.palette[idx % Self.palette.count]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
@@ -71,15 +82,32 @@ struct CategoryCardView: View {
                 )
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.leading, 6)
+        .padding(.trailing, 10)
         .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 7)
-                .fill(Color(NSColor.controlBackgroundColor))
-                .overlay(
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(Color(NSColor.controlBackgroundColor))
+                RoundedRectangle(cornerRadius: 7)
+                    .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+                // 출력폴더 색상 바 (왼쪽 4px)
+                if let color = outputColor {
                     RoundedRectangle(cornerRadius: 7)
-                        .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
-                )
+                        .fill(color.opacity(0.18))
+                    Rectangle()
+                        .fill(color.opacity(0.75))
+                        .frame(width: 4)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 7,
+                                bottomLeadingRadius: 7,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 0
+                            )
+                        )
+                }
+            }
         )
         .onHover { isHovered = $0 }
     }
@@ -136,33 +164,47 @@ private struct ConditionTagsView: View {
 
 // MARK: - OutputDropdown
 
-private struct OutputDropdown: View {
+struct OutputDropdown: View {
     let selectedIdx: Int
     let outputFolders: [URL]
     let onChange: (Int) -> Void
 
-    private let labels = ["A","B","C","D"]
+    private func folderLabel(_ idx: Int) -> String {
+        let letters = Array("ABCDEFGHIJKLMNOP")
+        return idx < letters.count ? String(letters[idx]) : "\(idx + 1)"
+    }
 
     var selectedLabel: String {
         if selectedIdx == 0 || outputFolders.isEmpty { return "개별 모드" }
         let folderIdx = selectedIdx - 1
         guard folderIdx < outputFolders.count else { return "개별 모드" }
-        return "\(labels[folderIdx]): \(outputFolders[folderIdx].lastPathComponent)"
+        return "\(folderLabel(folderIdx)): \(outputFolders[folderIdx].lastPathComponent)"
     }
 
     var body: some View {
-        Menu(selectedLabel) {
+        Menu {
             Button("개별 모드") { onChange(0) }
             Divider()
             ForEach(Array(outputFolders.enumerated()), id: \.offset) { i, url in
-                Button("\(labels[safe: i] ?? ""): \(url.lastPathComponent)\(i == 0 ? " (메인)" : "")") {
+                Button("\(folderLabel(i)): \(url.lastPathComponent)\(i == 0 ? " (메인)" : "")") {
                     onChange(i + 1)
                 }
             }
+        } label: {
+            Text(selectedLabel)
+                .font(.system(size: 10))
+                .lineLimit(1)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
         }
         .menuStyle(.borderlessButton)
-        .font(.system(size: 10))
-        .frame(maxWidth: 130)
+        .fixedSize()
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+        )
+        .frame(maxWidth: 140)
     }
 }
 

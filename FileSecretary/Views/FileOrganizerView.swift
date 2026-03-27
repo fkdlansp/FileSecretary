@@ -34,11 +34,13 @@ struct FileOrganizerView: View {
             )
         }
         // Uncategorized dialog
-        .sheet(isPresented: $vm.showUncategorizedDialog, onDismiss: { vm.confirmUncategorized(false) }) {
+        .sheet(isPresented: $vm.showUncategorizedDialog, onDismiss: { vm.confirmUncategorized(.leaveInPlace) }) {
             UncategorizedDialog(
                 fileName: vm.conflictFile?.lastPathComponent ?? "",
-                onMoveToEtc: { vm.confirmUncategorized(true) },
-                onSkip: { vm.confirmUncategorized(false) }
+                mainFolderName: vm.uncategorizedMainFolderName,
+                onMoveToMain:    { vm.confirmUncategorized(.moveToMain,     applyToAll: $0) },
+                onLeaveInPlace:  { vm.confirmUncategorized(.leaveInPlace,   applyToAll: $0) },
+                onMoveToLocalEtc:{ vm.confirmUncategorized(.moveToLocalEtc, applyToAll: $0) }
             )
         }
         // Category conflict dialog
@@ -46,8 +48,8 @@ struct FileOrganizerView: View {
             CategoryConflictDialog(
                 fileName: vm.conflictFile?.lastPathComponent ?? "",
                 categories: vm.conflictCategories,
-                onSelect: { cat in vm.resolveConflict(.useCategory(cat)) },
-                onSkip: { vm.resolveConflict(.skip) }
+                onSelect: { cat, all in vm.resolveConflict(.useCategory(cat), applyToAll: all) },
+                onSkip:   { all in vm.resolveConflict(.skip, applyToAll: all) }
             )
         }
         // Exclude list editor

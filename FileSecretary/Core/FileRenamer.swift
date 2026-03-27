@@ -6,6 +6,7 @@ struct RenameItem: Identifiable {
     var id = UUID()
     var originalURL: URL
     var customName: String?   // nil → use original base name
+    var isSelected: Bool = true
 
     var baseName: String { customName ?? originalURL.deletingPathExtension().lastPathComponent }
     var ext: String { originalURL.pathExtension }

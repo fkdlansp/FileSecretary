@@ -3,10 +3,11 @@ import SwiftUI
 struct CategoryConflictDialog: View {
     let fileName: String
     let categories: [Category]
-    let onSelect: (Category) -> Void
-    let onSkip: () -> Void
+    let onSelect: (Category, Bool) -> Void
+    let onSkip: (Bool) -> Void
 
     @State private var selectedId: String = ""
+    @State private var applyToAll = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -50,13 +51,20 @@ struct CategoryConflictDialog: View {
 
             Divider()
 
+            Toggle(isOn: $applyToAll) {
+                Text("같은 카테고리 조합의 이후 파일에 모두 적용")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .toggleStyle(.checkbox)
+
             HStack {
                 Spacer()
-                Button("이 파일만 건너뛰기", action: onSkip)
+                Button("건너뛰기") { onSkip(applyToAll) }
                     .keyboardShortcut(.cancelAction)
                 Button("이동") {
                     if let cat = categories.first(where: { $0.id == selectedId }) {
-                        onSelect(cat)
+                        onSelect(cat, applyToAll)
                     }
                 }
                 .keyboardShortcut(.defaultAction)
@@ -64,7 +72,7 @@ struct CategoryConflictDialog: View {
             }
         }
         .padding(20)
-        .frame(width: 360)
+        .frame(width: 380)
         .onAppear {
             selectedId = categories.first?.id ?? ""
         }

@@ -42,11 +42,25 @@ private class RenameViewModel: ObservableObject {
         snapshot = items
     }
 
+    // MARK: Select all
+
+    var allSelected: Bool { items.isEmpty ? false : items.allSatisfy { $0.isSelected } }
+
+    func toggleSelectAll() {
+        let newVal = !allSelected
+        for i in items.indices { items[i].isSelected = newVal }
+    }
+
     // MARK: Preview
 
     func previewName(for item: RenameItem, at index: Int) -> String {
-        let trimmed = unifiedBaseName.trimmingCharacters(in: .whitespaces)
+        guard item.isSelected else { return item.displayName }
 
+        // 선택된 항목 기준으로 순번 재계산
+        let selectedItems = items.filter { $0.isSelected }
+        let selectedIndex = selectedItems.firstIndex(where: { $0.id == item.id }) ?? index
+
+        let trimmed = unifiedBaseName.trimmingCharacters(in: .whitespaces)
         let base: String
         if !trimmed.isEmpty {
             if unifyMode == 0 {
@@ -62,7 +76,7 @@ private class RenameViewModel: ObservableObject {
         let ext = item.ext.isEmpty ? "" : ".\(item.ext)"
 
         if useNumbering {
-            let numStr = String(format: "%0\(digits)d", startNumber + index)
+            let numStr = String(format: "%0\(digits)d", startNumber + selectedIndex)
             return "\(numStr)_\(base)\(ext)"
         } else {
             return "\(base)\(ext)"
@@ -98,7 +112,7 @@ private class RenameViewModel: ObservableObject {
         isApplying = true
         errorMessage = nil
         let result = renamer.apply(
-            items: items,
+            items: items.filter { $0.isSelected },
             digits: digits,
             startNumber: startNumber,
             unifiedBaseName: unifiedBaseName,
@@ -206,83 +220,119 @@ struct FileRenameView: View {
     // MARK: - Controls bar
 
     private var controlsBar: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Row 1: 번호 자릿수, 시작 번호, 공통 이름, 통일 방식
-            HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 0) {
+
+            // 번호 자릿수
+            VStack(alignment: .leading, spacing: 4) {
                 Text("번호 자릿수")
-                    .font(.system(size: 11))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.secondary)
                 Picker("", selection: $vm.digits) {
                     ForEach(1 ... 5, id: \.self) { Text("\($0)").tag($0) }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 130)
+                .frame(width: 140)
                 .labelsHidden()
                 .disabled(!vm.useNumbering)
                 .opacity(vm.useNumbering ? 1 : 0.4)
+            }
+            .padding(.horizontal, 14)
 
-                Divider().frame(height: 18)
+            Divider().frame(height: 46)
 
+            // 시작 번호
+            VStack(alignment: .leading, spacing: 4) {
                 Text("시작 번호")
-                    .font(.system(size: 11))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.secondary)
                 TextField("없음", text: $vm.startNumberText)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 54)
+                    .frame(width: 60)
                     .font(.system(size: 11))
                     .onChange(of: vm.startNumberText) { val in
                         let filtered = val.filter { $0.isNumber }
                         if filtered != val { vm.startNumberText = filtered }
                     }
+                Text("비우면 번호 없이 저장")
+                    .font(.system(size: 9))
+                    .foregroundColor(Color.secondary.opacity(0.7))
+            }
+            .padding(.horizontal, 14)
 
-                Divider().frame(height: 18)
+            Divider().frame(height: 46)
 
+            // 공통 이름
+            VStack(alignment: .leading, spacing: 4) {
                 Text("공통 이름")
-                    .font(.system(size: 11))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.secondary)
-                TextField("비우면 원본 파일명 유지", text: $vm.unifiedBaseName)
+                TextField("비워두면 원본 유지", text: $vm.unifiedBaseName)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 11))
                     .frame(width: 160)
-
-                Divider().frame(height: 18)
-
-                Text("통일 방식")
                     .font(.system(size: 11))
+                Text("비우면 원본 파일명 유지")
+                    .font(.system(size: 9))
+                    .foregroundColor(Color.secondary.opacity(0.7))
+            }
+            .padding(.horizontal, 14)
+
+            Divider().frame(height: 46)
+
+            // 통일 방식
+            VStack(alignment: .leading, spacing: 4) {
+                Text("통일 방식")
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.secondary)
                 Picker("", selection: $vm.unifyMode) {
                     Text("통일명").tag(0)
                     Text("통일명(원본명)").tag(1)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 170)
+                .frame(width: 150)
                 .labelsHidden()
-
-                Spacer()
+                Text(vm.unifyMode == 0 ? "번호_통일명.확장자" : "번호_통일명(원본명).확장자")
+                    .font(.system(size: 9))
+                    .foregroundColor(Color.secondary.opacity(0.7))
             }
+            .padding(.horizontal, 14)
 
-            // 안내
-            Text("시작 번호를 비워두면 번호 없이 저장됩니다  ·  공통 이름을 비워두면 원본 파일명이 유지됩니다")
-                .font(.system(size: 9))
-                .foregroundColor(.secondary)
+            Spacer()
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Column headers
 
     private var columnHeaders: some View {
-        HStack {
-            Spacer().frame(width: 22)
+        HStack(spacing: 8) {
+            // 전체 선택 체크박스
+            Button {
+                vm.toggleSelectAll()
+            } label: {
+                Image(systemName: vm.allSelected ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 12))
+                    .foregroundColor(vm.allSelected ? .accentColor : .secondary)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 14)
+
+            // 드래그 핸들 자리
+            Spacer().frame(width: 14)
+
             Text("원본 파일명")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.secondary)
-            Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            // 화살표 자리 (투명, 정렬용)
+            Image(systemName: "arrow.right")
+                .font(.system(size: 9))
+                .foregroundColor(.clear)
+
             Text("변경 후 미리보기")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.secondary)
-            Spacer().frame(width: 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 4)

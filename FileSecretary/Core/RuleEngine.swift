@@ -66,6 +66,24 @@ struct RulesData: Codable {
     var categories: [Category]
     var outputFolders: [String]
     var excludeList: ExcludeList
+    var etcOutputIdx: Int
+
+    init(version: Int, categories: [Category], outputFolders: [String], excludeList: ExcludeList, etcOutputIdx: Int = 0) {
+        self.version = version
+        self.categories = categories
+        self.outputFolders = outputFolders
+        self.excludeList = excludeList
+        self.etcOutputIdx = etcOutputIdx
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version      = try c.decode(Int.self,        forKey: .version)
+        categories   = try c.decode([Category].self, forKey: .categories)
+        outputFolders = try c.decode([String].self,  forKey: .outputFolders)
+        excludeList  = try c.decode(ExcludeList.self, forKey: .excludeList)
+        etcOutputIdx = (try? c.decode(Int.self,      forKey: .etcOutputIdx)) ?? 0
+    }
 }
 
 // MARK: - RuleEngine

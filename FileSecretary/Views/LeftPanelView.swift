@@ -69,7 +69,7 @@ struct LeftPanelView: View {
 
                 // MARK: 출력 폴더 드롭존
                 VStack(alignment: .leading, spacing: 0) {
-                    SectionHeader("출력 폴더 (최대 4개)")
+                    SectionHeader("출력 폴더")
 
                     ForEach(Array(vm.outputFolders.enumerated()), id: \.offset) { idx, url in
                         OutputFolderRow(idx: idx, url: url) {
@@ -77,10 +77,7 @@ struct LeftPanelView: View {
                         }
                     }
 
-                    AddFolderButton(
-                        label: "+ 폴더 추가 / 드롭",
-                        disabled: vm.outputFolders.count >= 4
-                    ) {
+                    AddFolderButton(label: "+ 폴더 추가 / 드롭") {
                         vm.openFolderPanel { vm.addOutputFolder($0) }
                     }
 
@@ -128,64 +125,14 @@ struct LeftPanelView: View {
                 )
                 .animation(.easeInOut(duration: 0.15), value: isOutputDropTargeted)
                 .onDrop(of: [UTType.fileURL], isTargeted: $isOutputDropTargeted) { providers in
-                    guard vm.outputFolders.count < 4 else { return false }
                     handleDrop(providers, to: .output)
                     return true
                 }
 
-                Divider().padding(.vertical, 8)
-
-                // MARK: 원 클릭 다운로드 정리
-                SectionHeader("원 클릭 다운로드 폴더 정리")
-                Text("~/Downloads  •  파일 타입 기준  •  넘버링 없음")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 6)
-
-                Button {
-                    vm.organizeDownloads()
-                } label: {
-                    if vm.isOrganizing {
-                        HStack(spacing: 5) {
-                            ProgressView().controlSize(.mini)
-                            Text("정리 중...")
-                        }
-                    } else {
-                        Text("지금 정리")
-                    }
-                }
-                .buttonStyle(SmallButtonStyle(color: .accentColor))
-                .disabled(vm.isOrganizing)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
-
-                Divider().padding(.vertical, 8)
-
-                // MARK: 도구
-                SectionHeader("도구")
-
-                HStack(spacing: 8) {
-                    Button("프리셋 저장") { vm.savePreset() }
-                    Text("·")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color.secondary.opacity(0.5))
-                    Button("불러오기") { vm.loadPreset() }
-                    Text("·")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color.secondary.opacity(0.5))
-                    Button("로그 폴더") { vm.openLogFolder() }
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundColor(.accentColor)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 4)
-
 
             }
         }
-        .frame(width: 210)
+        .frame(width: 240)
         .background(Color(NSColor.controlBackgroundColor))
     }
 
@@ -278,18 +225,22 @@ private struct OutputFolderRow: View {
     let url: URL
     let onRemove: () -> Void
 
-    private let colors: [Color] = [.blue, .green, .orange, .purple]
-    private let labels = ["A","B","C","D"]
+    private var folderLabel: String {
+        let letters = Array("ABCDEFGHIJKLMNOP")
+        return idx < letters.count ? String(letters[idx]) : "\(idx + 1)"
+    }
+
+    private var folderColor: Color { CategoryCardView.palette[idx % CategoryCardView.palette.count] }
 
     @State private var isPathHovered = false
 
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(colors[safe: idx] ?? .gray)
+                .fill(folderColor)
                 .frame(width: 8, height: 8)
 
-            Text(labels[safe: idx] ?? "")
+            Text(folderLabel)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
 
