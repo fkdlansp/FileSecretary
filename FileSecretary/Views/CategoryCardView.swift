@@ -39,6 +39,11 @@ struct CategoryCardView: View {
                     .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
 
+                Text("폴더명: \(category.folderName)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+
                 // Condition badge
                 ConditionBadge(category: category)
 

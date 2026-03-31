@@ -15,14 +15,20 @@ class LogWriter {
         return dir
     }
 
-    private var logSubfolderURL: URL {
-        let dir = logFolderURL.appendingPathComponent("log", isDirectory: true)
+    private var xlsxMoveFolderURL: URL {
+        let dir = logFolderURL.appendingPathComponent("xlsx/move", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
 
-    private var xlsxSubfolderURL: URL {
-        let dir = logFolderURL.appendingPathComponent("xlsx", isDirectory: true)
+    private var xlsxDownloadFolderURL: URL {
+        let dir = logFolderURL.appendingPathComponent("xlsx/download", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    private var xlsxRenameFolderURL: URL {
+        let dir = logFolderURL.appendingPathComponent("xlsx/rename", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
@@ -30,7 +36,7 @@ class LogWriter {
     private var todayLogURL: URL {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        return logSubfolderURL.appendingPathComponent("\(f.string(from: Date())).log")
+        return logFolderURL.appendingPathComponent("\(f.string(from: Date())).log")
     }
 
     // MARK: - Logging
@@ -97,8 +103,7 @@ class LogWriter {
         if !runEntries.isEmpty {
             let f = DateFormatter()
             f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-            let filename = "\(f.string(from: now)).xlsx"
-            let xlsxURL  = xlsxSubfolderURL.appendingPathComponent(filename)
+            let xlsxURL = xlsxMoveFolderURL.appendingPathComponent("\(f.string(from: now)).xlsx")
             try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
         }
     }
@@ -129,7 +134,79 @@ class LogWriter {
         if !runEntries.isEmpty {
             let f = DateFormatter()
             f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-            let xlsxURL = xlsxSubfolderURL.appendingPathComponent("undo_\(f.string(from: now)).xlsx")
+            let xlsxURL = xlsxMoveFolderURL.appendingPathComponent("undo_\(f.string(from: now)).xlsx")
+            try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
+        }
+    }
+
+    func logDownloadResult(_ result: OrganizeResult, downloadsURL: URL) {
+        let now = Date()
+        log("===== 다운로드 정리 시작 =====")
+        log("대상 폴더: \(downloadsURL.path)")
+        result.moved.forEach   { log("이동: \($0.from.lastPathComponent) → \($0.to.path)") }
+        result.skipped.forEach { log("건너뜀: \($0.lastPathComponent)") }
+        result.errors.forEach  { log("오류: \($0.file.lastPathComponent) — \($0.error.localizedDescription)") }
+        log("===== 다운로드 정리 완료: 이동 \(result.movedCount)개 / 건너뜀 \(result.skippedCount)개 =====")
+
+        var runEntries: [LogEntry] = []
+        for move in result.moved {
+            let e = LogEntry(timestamp: now, action: "이동",
+                fileName: move.from.lastPathComponent,
+                sourcePath: move.from.path, destPath: move.to.path,
+                errorMessage: "", targetFolders: downloadsURL.path, outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+        for skip in result.skipped {
+            let e = LogEntry(timestamp: now, action: "건너뜀",
+                fileName: skip.lastPathComponent,
+                sourcePath: skip.path, destPath: "",
+                errorMessage: "", targetFolders: downloadsURL.path, outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+        for err in result.errors {
+            let e = LogEntry(timestamp: now, action: "오류",
+                fileName: err.file.lastPathComponent,
+                sourcePath: err.file.path, destPath: "",
+                errorMessage: err.error.localizedDescription,
+                targetFolders: downloadsURL.path, outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+
+        if !runEntries.isEmpty {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+            let xlsxURL = xlsxDownloadFolderURL.appendingPathComponent("\(f.string(from: now)).xlsx")
+            try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
+        }
+    }
+
+    func logDownloadUndoResult(restored: [(from: URL, to: URL)], skipped: [URL]) {
+        let now = Date()
+        log("===== 다운로드 되돌리기 시작 =====")
+        restored.forEach { log("되돌리기: \($0.from.lastPathComponent) ← \($0.to.path)") }
+        skipped.forEach  { log("건너뜀: \($0.lastPathComponent)") }
+        log("===== 다운로드 되돌리기 완료: 복원 \(restored.count)개 / 건너뜀 \(skipped.count)개 =====")
+
+        var runEntries: [LogEntry] = []
+        for pair in restored {
+            let e = LogEntry(timestamp: now, action: "되돌리기",
+                fileName: pair.from.lastPathComponent,
+                sourcePath: pair.from.path, destPath: pair.to.path,
+                errorMessage: "", targetFolders: "", outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+        for url in skipped {
+            let e = LogEntry(timestamp: now, action: "건너뜀",
+                fileName: url.lastPathComponent,
+                sourcePath: url.path, destPath: "",
+                errorMessage: "", targetFolders: "", outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+
+        if !runEntries.isEmpty {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+            let xlsxURL = xlsxDownloadFolderURL.appendingPathComponent("undo_\(f.string(from: now)).xlsx")
             try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
         }
     }
@@ -161,7 +238,38 @@ class LogWriter {
         if !runEntries.isEmpty {
             let f = DateFormatter()
             f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-            let xlsxURL = xlsxSubfolderURL.appendingPathComponent("rename_\(f.string(from: now)).xlsx")
+            let xlsxURL = xlsxRenameFolderURL.appendingPathComponent("name_\(f.string(from: now)).xlsx")
+            try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
+        }
+    }
+
+    func logRenameUndoResult(restored: [(from: URL, to: URL)], skipped: [URL]) {
+        let now = Date()
+        log("===== 파일명 되돌리기 시작 =====")
+        restored.forEach { log("되돌리기: \($0.from.lastPathComponent) ← \($0.to.lastPathComponent)") }
+        skipped.forEach  { log("건너뜀: \($0.lastPathComponent)") }
+        log("===== 파일명 되돌리기 완료: 복원 \(restored.count)개 / 건너뜀 \(skipped.count)개 =====")
+
+        var runEntries: [LogEntry] = []
+        for pair in restored {
+            let e = LogEntry(timestamp: now, action: "파일명 되돌리기",
+                fileName: pair.from.lastPathComponent,
+                sourcePath: pair.from.path, destPath: pair.to.path,
+                errorMessage: "", targetFolders: "", outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+        for url in skipped {
+            let e = LogEntry(timestamp: now, action: "건너뜀",
+                fileName: url.lastPathComponent,
+                sourcePath: url.path, destPath: "",
+                errorMessage: "", targetFolders: "", outputFolders: "")
+            entries.append(e); runEntries.append(e)
+        }
+
+        if !runEntries.isEmpty {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+            let xlsxURL = xlsxRenameFolderURL.appendingPathComponent("undo_name_\(f.string(from: now)).xlsx")
             try? XLSXExporter.export(entries: runEntries, to: xlsxURL)
         }
     }

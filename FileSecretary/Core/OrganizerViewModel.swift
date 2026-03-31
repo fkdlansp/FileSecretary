@@ -322,7 +322,11 @@ class OrganizerViewModel: ObservableObject {
             defer { secureURLs.forEach { BookmarkManager.shared.stopAccessing($0) } }
             let result = undoHistory.undo()
             undoCount = undoHistory.count
-            LogWriter.shared.logUndoResult(restored: result.restored, skipped: result.skipped)
+            if result.source == .download {
+                LogWriter.shared.logDownloadUndoResult(restored: result.restored, skipped: result.skipped)
+            } else {
+                LogWriter.shared.logUndoResult(restored: result.restored, skipped: result.skipped)
+            }
         }
     }
 
@@ -348,9 +352,9 @@ class OrganizerViewModel: ObservableObject {
                         return mode
                     }
                 )
-                undoHistory.push(result)
+                undoHistory.push(result, source: .download)
                 undoCount = undoHistory.count
-                LogWriter.shared.logOrganizeResult(result, targetFolders: [downloadsURL], outputFolders: [])
+                LogWriter.shared.logDownloadResult(result, downloadsURL: downloadsURL)
                 downloadResultMessage = result.movedCount > 0
                     ? "완료 · \(result.movedCount)개 이동"
                     : "정리할 파일 없음"

@@ -10,7 +10,7 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .organizer
     @State private var isExpanded = false
     @State private var targetFolders: [URL] = []
-    @State private var renameFolderURL: URL? = nil
+    @State private var renameDropURLs: [URL] = []
     @StateObject private var organizerVM = OrganizerViewModel()
 
     var body: some View {
@@ -19,7 +19,7 @@ struct ContentView: View {
                 ExpandedRootView(
                     selectedTab: $selectedTab,
                     targetFolders: $targetFolders,
-                    renameFolderURL: renameFolderURL,
+                    renameDropURLs: renameDropURLs,
                     organizerVM: organizerVM
                 )
             } else {
@@ -27,7 +27,7 @@ struct ContentView: View {
                     selectedTab: $selectedTab,
                     isExpanded: $isExpanded,
                     targetFolders: $targetFolders,
-                    renameFolderURL: $renameFolderURL,
+                    renameDropURLs: $renameDropURLs,
                     organizerVM: organizerVM
                 )
             }
@@ -91,26 +91,46 @@ struct CompactRootView: View {
     @Binding var selectedTab: AppTab
     @Binding var isExpanded: Bool
     @Binding var targetFolders: [URL]
-    @Binding var renameFolderURL: URL?
+    @Binding var renameDropURLs: [URL]
     @ObservedObject var organizerVM: OrganizerViewModel
+
+    @State private var showFileOnlyNotice = false
 
     var body: some View {
         VStack(spacing: 0) {
             TabBarView(selectedTab: $selectedTab, compact: true)
             Divider()
             DropZoneView(tab: selectedTab) { urls in
-                if selectedTab == .rename {
-                    renameFolderURL = urls.first(where: {
-                        var isDir: ObjCBool = false
-                        return FileManager.default.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue
-                    }) ?? urls.first.map { $0.deletingLastPathComponent() }
+                let fm = FileManager.default
+                let hasFiles = urls.contains { url in
+                    var isDir: ObjCBool = false
+                    return fm.fileExists(atPath: url.path, isDirectory: &isDir) && !isDir.boolValue
+                }
+                if hasFiles && selectedTab == .organizer {
+                    // 파일 정리탭에 파일 드롭 → 안내만 표시, 탭 전환 없음
+                    withAnimation(.easeInOut(duration: 0.2)) { showFileOnlyNotice = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showFileOnlyNotice = false }
+                    }
+                    return
+                }
+                if hasFiles {
+                    // rename 탭에서 파일 드롭 → 파일명 편집으로
+                    renameDropURLs = urls
+                } else if selectedTab == .rename {
+                    renameDropURLs = urls
                 } else {
-                    targetFolders = urls
+                    targetFolders = urls.filter {
+                        var isDir: ObjCBool = false
+                        return fm.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue
+                    }
                 }
                 isExpanded = true
             }
+            .overlay(fileOnlyNoticeOverlay)
             Divider()
             VStack(spacing: 6) {
+
                 // 다운로드 정리 버튼
                 Button {
                     organizerVM.organizeDownloads()
@@ -166,6 +186,27 @@ struct CompactRootView: View {
         }
         .frame(width: 260, height: 220)
     }
+
+    @ViewBuilder
+    private var fileOnlyNoticeOverlay: some View {
+        if showFileOnlyNotice {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(NSColor.windowBackgroundColor).opacity(0.96))
+                    .padding(14)
+                VStack(spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.accentColor)
+                    Text("파일 드롭은\n파일명 편집 탭에서만\n사용 가능합니다")
+                        .font(.system(size: 11, weight: .medium))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
+                }
+            }
+            .transition(.opacity)
+        }
+    }
 }
 
 // MARK: - State B: Expanded
@@ -173,7 +214,7 @@ struct CompactRootView: View {
 struct ExpandedRootView: View {
     @Binding var selectedTab: AppTab
     @Binding var targetFolders: [URL]
-    let renameFolderURL: URL?
+    let renameDropURLs: [URL]
     let organizerVM: OrganizerViewModel
 
     var body: some View {
@@ -189,7 +230,7 @@ struct ExpandedRootView: View {
                 case .organizer:
                     FileOrganizerView(targetFolders: $targetFolders, vm: organizerVM)
                 case .rename:
-                    FileRenameView(initialFolderURL: renameFolderURL)
+                    FileRenameView(initialURLs: renameDropURLs)
                 }
             }
             .padding(.bottom, 14)

@@ -81,13 +81,8 @@ struct DropZoneView: View {
                 guard let data = item as? Data,
                       let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
 
-                var isDir: ObjCBool = false
-                let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
-                guard exists else { return }
-
-                if tab == .rename || isDir.boolValue {
-                    result.append(url)
-                }
+                guard FileManager.default.fileExists(atPath: url.path) else { return }
+                result.append(url)
             }
         }
 

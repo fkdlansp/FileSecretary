@@ -72,6 +72,12 @@ class FileOrganizer {
         let fm    = FileManager.default
         let files = try scanFiles(in: targetFolder)
 
+        // 출력폴더별 상대 넘버링 맵 사전 계산
+        let folderNumberMap = buildFolderNumberMap(
+            files: files, categories: categories, excludeList: excludeList,
+            outputFolders: outputFolders, targetFolder: targetFolder
+        )
+
         for file in files {
             // Exclude list check
             if ruleEngine.isExcluded(file: file, excludeList: excludeList) {
@@ -126,10 +132,14 @@ class FileOrganizer {
                 destination = targetFolder
             }
 
-            // 출력폴더가 2개 이상이면 넘버링 없이 카테고리명만 사용
+            // 실제 해당 출력폴더에 들어오는 카테고리 기준 상대 넘버링
             let folderName: String
             if let cat = chosenCategory {
-                folderName = outputFolders.count > 1 ? cat.name : cat.folderName
+                if let relNum = folderNumberMap[destination.path]?[cat.id] {
+                    folderName = String(format: "%02d_%@", relNum, cat.name)
+                } else {
+                    folderName = cat.folderName
+                }
             } else {
                 folderName = "기타"
             }
@@ -161,7 +171,118 @@ class FileOrganizer {
             }
         }
 
+        // 기존 출력폴더의 번호가 틀어진 폴더들 재정렬
+        reconcileFolderNumbers(
+            destPaths: Array(folderNumberMap.keys),
+            folderNumberMap: folderNumberMap,
+            categories: categories
+        )
+
         return result
+    }
+
+    // MARK: - Folder numbering helpers
+
+    /// 사전 스캔: 각 목적지 폴더에 어떤 카테고리가 들어올지 파악해 상대 번호 맵 반환
+    private func buildFolderNumberMap(
+        files: [URL],
+        categories: [Category],
+        excludeList: ExcludeList,
+        outputFolders: [URL],
+        targetFolder: URL
+    ) -> [String: [String: Int]] {
+
+        let fm = FileManager.default
+        var catIdsPerDest: [String: Set<String>] = [:]
+
+        // 신규 파일 스캔
+        for file in files {
+            if ruleEngine.isExcluded(file: file, excludeList: excludeList) { continue }
+            let matches = ruleEngine.evaluate(file: file, categories: categories)
+            guard let cat = matches.first else { continue }
+            let dest: URL = (cat.outputIdx > 0 && cat.outputIdx - 1 < outputFolders.count)
+                ? outputFolders[cat.outputIdx - 1] : targetFolder
+            catIdsPerDest[dest.path, default: []].insert(cat.id)
+        }
+
+        // 기존 폴더 스캔 (이전 정리 결과)
+        let catByName = Dictionary(uniqueKeysWithValues: categories.map { ($0.name, $0) })
+        for destPath in catIdsPerDest.keys {
+            let destURL = URL(fileURLWithPath: destPath)
+            let items = (try? fm.contentsOfDirectory(at: destURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])) ?? []
+            for item in items {
+                var isDir: ObjCBool = false
+                guard fm.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue else { continue }
+                let name = item.lastPathComponent
+                guard name.count > 3,
+                      String(name.prefix(2)).allSatisfy({ $0.isNumber }),
+                      name.dropFirst(2).first == "_" else { continue }
+                let catName = String(name.dropFirst(3))
+                if let cat = catByName[catName] { catIdsPerDest[destPath]!.insert(cat.id) }
+            }
+        }
+
+        // 카테고리 num 순 정렬 후 상대 번호 부여
+        var result: [String: [String: Int]] = [:]
+        for (destPath, catIds) in catIdsPerDest {
+            let sorted = categories.filter { catIds.contains($0.id) }.sorted { $0.num < $1.num }
+            result[destPath] = Dictionary(uniqueKeysWithValues: sorted.enumerated().map { ($1.id, $0 + 1) })
+        }
+        return result
+    }
+
+    /// 기존 출력폴더 내 번호가 바뀐 폴더를 재정렬 (temp rename으로 충돌 방지)
+    private func reconcileFolderNumbers(
+        destPaths: [String],
+        folderNumberMap: [String: [String: Int]],
+        categories: [Category]
+    ) {
+        let fm = FileManager.default
+        let catByName = Dictionary(uniqueKeysWithValues: categories.map { ($0.name, $0) })
+
+        for destPath in destPaths {
+            guard let numMap = folderNumberMap[destPath],
+                  fm.fileExists(atPath: destPath) else { continue }
+            let destURL = URL(fileURLWithPath: destPath)
+            let items = (try? fm.contentsOfDirectory(at: destURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])) ?? []
+
+            var toRename: [(from: URL, newName: String)] = []
+            for item in items {
+                var isDir: ObjCBool = false
+                guard fm.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue else { continue }
+                let name = item.lastPathComponent
+                guard name.count > 3,
+                      String(name.prefix(2)).allSatisfy({ $0.isNumber }),
+                      name.dropFirst(2).first == "_" else { continue }
+                let catName = String(name.dropFirst(3))
+                guard let cat = catByName[catName], let newNum = numMap[cat.id] else { continue }
+                let newName = String(format: "%02d_%@", newNum, cat.name)
+                if newName != name { toRename.append((from: item, newName: newName)) }
+            }
+
+            // 1단계: 임시 이름으로 이동 (충돌 방지)
+            var pending: [(temp: URL, finalName: String)] = []
+            for r in toRename {
+                let tmp = destURL.appendingPathComponent("__fstmp_\(UUID().uuidString)")
+                if (try? fm.moveItem(at: r.from, to: tmp)) != nil {
+                    pending.append((temp: tmp, finalName: r.newName))
+                }
+            }
+            // 2단계: 최종 이름으로 이동 (이미 있으면 병합)
+            for p in pending {
+                let finalURL = destURL.appendingPathComponent(p.finalName)
+                if fm.fileExists(atPath: finalURL.path) {
+                    let contents = (try? fm.contentsOfDirectory(at: p.temp, includingPropertiesForKeys: nil, options: [])) ?? []
+                    for f in contents {
+                        let dst = finalURL.appendingPathComponent(f.lastPathComponent)
+                        if !fm.fileExists(atPath: dst.path) { try? fm.moveItem(at: f, to: dst) }
+                    }
+                    try? fm.removeItem(at: p.temp)
+                } else {
+                    try? fm.moveItem(at: p.temp, to: finalURL)
+                }
+            }
+        }
     }
 
     /// One-click Downloads cleanup — type-based, no numbering, default folders.

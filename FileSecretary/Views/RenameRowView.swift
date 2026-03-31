@@ -3,9 +3,11 @@ import SwiftUI
 struct RenameRowView: View {
     @Binding var item: RenameItem
     let preview: String
+    let onRemove: () -> Void
 
     @State private var isEditing = false
     @State private var editBuffer = ""
+    @State private var isHovered = false
     @FocusState private var fieldFocused: Bool
 
     var body: some View {
@@ -53,10 +55,22 @@ struct RenameRowView: View {
                 .foregroundColor(item.isSelected ? .secondary : Color.secondary.opacity(0.35))
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            // 제외 버튼 (hover 시 표시)
+            Button(action: onRemove) {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(.red.opacity(0.8))
+            }
+            .buttonStyle(.plain)
+            .help("목록에서 제외")
+            .opacity(isHovered ? 1 : 0)
+            .frame(width: 16)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
     }
 
     // MARK: - Inline edit actions

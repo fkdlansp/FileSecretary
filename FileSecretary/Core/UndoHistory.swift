@@ -1,7 +1,9 @@
 import Foundation
 
 struct UndoEntry {
+    enum Source { case organize, download }
     let moves: [(from: URL, to: URL)]
+    let source: Source
 }
 
 class UndoHistory {
@@ -9,17 +11,17 @@ class UndoHistory {
 
     var count: Int { stack.count }
 
-    func push(_ result: OrganizeResult) {
+    func push(_ result: OrganizeResult, source: UndoEntry.Source = .organize) {
         guard !result.moved.isEmpty else { return }
-        stack.append(UndoEntry(moves: result.moved))
+        stack.append(UndoEntry(moves: result.moved, source: source))
     }
 
     /// Undo the last organize operation, moving files back to their original locations.
     /// Also removes empty folders that were created during the organize.
-    /// Returns (restored moves, skipped URLs).
+    /// Returns (restored moves, skipped URLs, source).
     @discardableResult
-    func undo() -> (restored: [(from: URL, to: URL)], skipped: [URL]) {
-        guard let entry = stack.popLast() else { return ([], []) }
+    func undo() -> (restored: [(from: URL, to: URL)], skipped: [URL], source: UndoEntry.Source) {
+        guard let entry = stack.popLast() else { return ([], [], .organize) }
         let fm = FileManager.default
         var restored: [(from: URL, to: URL)] = []
         var skipped:  [URL] = []
@@ -53,6 +55,6 @@ class UndoHistory {
             }
         }
 
-        return (restored, skipped)
+        return (restored, skipped, entry.source)
     }
 }

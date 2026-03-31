@@ -142,9 +142,9 @@ struct LeftPanelView: View {
 
     private func handleDrop(_ providers: [NSItemProvider], to dest: DropDest) {
         let group = DispatchGroup()
-        var urls: [URL] = []
+        var collectedURLs: [URL?] = Array(repeating: nil, count: providers.count)
 
-        for provider in providers {
+        for (i, provider) in providers.enumerated() {
             group.enter()
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
                 defer { group.leave() }
@@ -153,11 +153,12 @@ struct LeftPanelView: View {
                 var isDir: ObjCBool = false
                 guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir),
                       isDir.boolValue else { return }
-                urls.append(url)
+                collectedURLs[i] = url
             }
         }
 
         group.notify(queue: .main) {
+            let urls = collectedURLs.compactMap { $0 }
             switch dest {
             case .target: urls.forEach { vm.addTargetFolder($0) }
             case .output: urls.forEach { vm.addOutputFolder($0) }

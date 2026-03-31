@@ -27,8 +27,8 @@ struct CategoryModalView: View {
 
             // Name
             VStack(alignment: .leading, spacing: 4) {
-                Text("카테고리명").font(.system(size: 11, weight: .medium))
-                TextField("이름 입력", text: $name)
+                Text("폴더명").font(.system(size: 11, weight: .medium))
+                TextField("폴더명 입력", text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
